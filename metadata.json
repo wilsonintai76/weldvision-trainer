@@ -1,0 +1,6 @@
+{
+  "name": "Weldvision Trainer",
+  "description": "Augmented reality guidance and real-time defect detection trainer for welders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
