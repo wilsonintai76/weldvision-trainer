@@ -246,7 +246,7 @@ fun WeldVisionLandscapeApp(
                             LoginScreen(viewModel, onNavigateToRegister = { viewModel.navigateTo(AppScreen.REGISTER) })
                         }
                         AppScreen.REGISTER -> {
-                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
                             RegistrationScreen(viewModel, onNavigateToLogin = { viewModel.navigateTo(AppScreen.LOGIN) })
                         }
                         AppScreen.SIMULATOR -> {
@@ -258,15 +258,15 @@ fun WeldVisionLandscapeApp(
                             CalibrationScreen(state, viewModel)
                         }
                         AppScreen.SETTINGS -> {
-                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
                             SettingsScreen(state, viewModel)
                         }
                         AppScreen.RESULTS -> {
-                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
                             ResultsScreen(state, viewModel)
                         }
                         AppScreen.PROFILE -> {
-                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
                             ProfileScreen(state, viewModel)
                         }
                     }
@@ -384,10 +384,9 @@ fun LockScreenOrientation(orientation: Int) {
     val context = LocalContext.current
     DisposableEffect(orientation) {
         val activity = context.findActivity() ?: return@DisposableEffect onDispose {}
-        val originalOrientation = activity.requestedOrientation
         activity.requestedOrientation = orientation
         onDispose {
-            activity.requestedOrientation = originalOrientation
+            // Do not restore original orientation, as it causes race conditions between screen transitions
         }
     }
 }
