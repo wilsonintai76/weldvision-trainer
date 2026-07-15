@@ -64,7 +64,7 @@ class WeldSyncManager(
     }
 
     // Main sync routine
-    suspend fun sync() = withContext(Dispatchers.IO) {
+    suspend fun sync(userId: Long) = withContext(Dispatchers.IO) {
         if (_syncState.value is SyncState.Syncing) return@withContext
         _syncState.value = SyncState.Syncing
         val startTime = System.currentTimeMillis()
@@ -80,14 +80,16 @@ class WeldSyncManager(
 
         try {
             // Get local profile and welding sessions
-            val localProfile = repository.getProfileDirect() ?: UserProfileEntity()
-            val unsyncedSessions = repository.getUnsyncedWeldSessions()
-            val allLocalSessions = repository.getAllWeldSessionsDirect()
+            val localProfile = repository.getProfileDirect(userId.toInt()) ?: UserProfileEntity()
+            val unsyncedSessions = repository.getUnsyncedWeldSessions(userId.toInt())
+            val allLocalSessions = repository.getAllWeldSessionsDirect(userId.toInt())
 
             // Prepare DTOs
             val profileDto = UserProfileDto(
                 id = localProfile.id,
                 name = localProfile.name,
+                email = localProfile.email,
+                matricNo = localProfile.matricNo,
                 level = localProfile.level,
                 experiencePoints = localProfile.experiencePoints,
                 gmawWeldTimeSeconds = localProfile.gmawWeldTimeSeconds,
@@ -99,6 +101,7 @@ class WeldSyncManager(
             val sessionDtos = allLocalSessions.map {
                 WeldSessionDto(
                     id = it.id,
+                    userId = it.userId,
                     timestamp = it.timestamp,
                     process = it.process,
                     material = it.material,
@@ -133,6 +136,8 @@ class WeldSyncManager(
                     UserProfileEntity(
                         id = updatedProfile.id,
                         name = updatedProfile.name,
+                        email = updatedProfile.email,
+                        matricNo = updatedProfile.matricNo,
                         level = updatedProfile.level,
                         experiencePoints = updatedProfile.experiencePoints,
                         gmawWeldTimeSeconds = updatedProfile.gmawWeldTimeSeconds,
@@ -147,6 +152,7 @@ class WeldSyncManager(
                 val mergedEntities = mergedSessions.map {
                     WeldSessionEntity(
                         id = it.id,
+                        userId = it.userId,
                         timestamp = it.timestamp,
                         process = it.process,
                         material = it.material,
@@ -166,7 +172,7 @@ class WeldSyncManager(
                 repository.insertWeldSessions(mergedEntities)
 
                 // Mark local changes as synced
-                repository.markUserProfileAsSynced()
+                repository.markUserProfileAsSynced(localProfile.id)
                 if (unsyncedSessions.isNotEmpty()) {
                     repository.markWeldSessionsAsSynced(unsyncedSessions.map { it.id })
                 }
@@ -215,6 +221,7 @@ class WeldSyncManager(
                     sessions = unsyncedSessions.map {
                         WeldSessionDto(
                             id = it.id,
+                            userId = it.userId.toInt(),
                             timestamp = it.timestamp,
                             process = it.process,
                             material = it.material,
@@ -244,6 +251,8 @@ class WeldSyncManager(
                     UserProfileEntity(
                         id = remoteProfile.id,
                         name = remoteProfile.name,
+                        email = remoteProfile.email,
+                        matricNo = remoteProfile.matricNo,
                         level = remoteProfile.level,
                         experiencePoints = remoteProfile.experiencePoints,
                         gmawWeldTimeSeconds = remoteProfile.gmawWeldTimeSeconds,
@@ -258,6 +267,7 @@ class WeldSyncManager(
                 val mergedEntities = remoteSessions.map {
                     WeldSessionEntity(
                         id = it.id,
+                        userId = it.userId,
                         timestamp = it.timestamp,
                         process = it.process,
                         material = it.material,
@@ -277,7 +287,7 @@ class WeldSyncManager(
                 repository.insertWeldSessions(mergedEntities)
 
                 // Complete synchronization flags
-                repository.markUserProfileAsSynced()
+                repository.markUserProfileAsSynced(localProfile.id)
                 if (unsyncedSessions.isNotEmpty()) {
                     repository.markWeldSessionsAsSynced(unsyncedSessions.map { it.id })
                 }
@@ -339,6 +349,7 @@ class WeldSyncManager(
             cloudSessions.add(
                 WeldSessionDto(
                     id = "session_cloud_device_2",
+                    userId = localProfile.id,
                     timestamp = "Jul 13, 2026 15:10",
                     process = "GTAW",
                     material = "Stainless Steel",
@@ -357,6 +368,7 @@ class WeldSyncManager(
             cloudSessions.add(
                 WeldSessionDto(
                     id = "session_cloud_device_3",
+                    userId = localProfile.id,
                     timestamp = "Jul 14, 2026 01:25",
                     process = "SMAW",
                     material = "Carbon Steel",
@@ -394,8 +406,10 @@ class WeldSyncManager(
         // 4. Reconcile Profile (Last Write Wins, or higher level wins)
         // Simulate a remote profile from cloud that might have slightly more experience from multi-device practice
         val cloudProfile = UserProfileDto(
-            id = 1,
+            id = localProfile.id,
             name = localProfile.name, // Keep the same name
+            email = localProfile.email,
+            matricNo = localProfile.matricNo,
             level = maxOf(localProfile.level, 3),
             experiencePoints = maxOf(localProfile.experiencePoints, 1250),
             gmawWeldTimeSeconds = maxOf(localProfile.gmawWeldTimeSeconds, 240),

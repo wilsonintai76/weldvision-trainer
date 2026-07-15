@@ -47,6 +47,17 @@ WeldVision Trainer 2.0 implements a **Hybrid Edge-Cloud Architecture**. Real-tim
 
 ---
 
+## 1.5 Physical Setup: The Fixture Frame
+
+A critical design distinction in the physical setup is that the AprilTags are **NOT** placed on the consumable steel coupons. Placing tags on the workpiece would result in tags being damaged by heat, spatter, and grinding, adding recurring setup costs.
+
+Instead, the AprilTags are permanently mounted on a **rigid fixture frame** that holds the workpiece.
+- The frame is fixed to the welding table and has 2–4 AprilTags at known positions defining the World origin $[W]$.
+- The frame holds standard bare steel coupons.
+- Because the tags on the fixture do not move, the app knows the exact position of the coupon relative to the tags as soon as the student inserts a new one, requiring zero setup per session.
+
+---
+
 ## 2. Dynamic Performance Space Math
 
 The physical-digital alignment must be consistently maintained between both platforms. The Android app logs the raw telemetry, which is later reconstructed on the instructor's web canvas.

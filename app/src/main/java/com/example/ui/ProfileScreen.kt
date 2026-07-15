@@ -135,6 +135,7 @@ fun ProfileScreen(
                         OutlinedTextField(
                             value = state.editedName,
                             onValueChange = { viewModel.updateEditedName(it) },
+                            label = { Text("Name", color = Color.Gray, fontSize = 10.sp) },
                             textStyle = LocalTextStyle.current.copy(
                                 fontSize = 13.sp,
                                 color = Color.White,
@@ -149,7 +150,27 @@ fun ProfileScreen(
                             singleLine = true,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp)
+                                .height(56.dp)
+                        )
+                        OutlinedTextField(
+                            value = state.editedMatricNo,
+                            onValueChange = { viewModel.updateEditedMatricNo(it) },
+                            label = { Text("Matric No.", color = Color.Gray, fontSize = 10.sp) },
+                            textStyle = LocalTextStyle.current.copy(
+                                fontSize = 13.sp,
+                                color = Color.White,
+                                fontFamily = FontFamily.Monospace
+                            ),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = WarningAmber,
+                                unfocusedBorderColor = BorderGrey,
+                                focusedContainerColor = DeepSpaceBlue,
+                                unfocusedContainerColor = DeepSpaceBlue
+                            ),
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
                         )
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -158,7 +179,7 @@ fun ProfileScreen(
                                 Text("CANCEL", color = AlertRed, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
                             }
                             Button(
-                                onClick = { viewModel.saveProfileName() },
+                                onClick = { viewModel.saveProfileData() },
                                 colors = ButtonDefaults.buttonColors(containerColor = AccentCyan),
                                 shape = RoundedCornerShape(4.dp),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
@@ -173,14 +194,25 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = state.profileName.uppercase(),
-                            color = Color.White,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace,
-                            textAlign = TextAlign.Center
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = state.profileName.uppercase(),
+                                color = Color.White,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace,
+                                textAlign = TextAlign.Center
+                            )
+                            if (state.matricNo.isNotBlank()) {
+                                Text(
+                                    text = state.matricNo,
+                                    color = MutedText,
+                                    fontSize = 12.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.width(4.dp))
                         IconButton(
                             onClick = { viewModel.startEditingName() },
@@ -188,12 +220,23 @@ fun ProfileScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit Name",
+                                contentDescription = "Edit Profile",
                                 tint = AccentCyan,
                                 modifier = Modifier.size(14.dp)
                             )
                         }
                     }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Button(
+                    onClick = { viewModel.logout() },
+                    colors = ButtonDefaults.buttonColors(containerColor = AlertRed),
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier.fillMaxWidth().height(36.dp)
+                ) {
+                    Text("LOGOUT", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
                 }
 
                 Divider(color = BorderGrey, thickness = 0.5.dp)

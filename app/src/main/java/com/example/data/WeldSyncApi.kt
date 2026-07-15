@@ -8,6 +8,8 @@ import retrofit2.http.*
 data class UserProfileDto(
     @Json(name = "id") val id: Int,
     @Json(name = "name") val name: String,
+    @Json(name = "email") val email: String,
+    @Json(name = "matricNo") val matricNo: String,
     @Json(name = "level") val level: Int,
     @Json(name = "experiencePoints") val experiencePoints: Int,
     @Json(name = "gmawWeldTimeSeconds") val gmawWeldTimeSeconds: Int,
@@ -19,6 +21,7 @@ data class UserProfileDto(
 @JsonClass(generateAdapter = true)
 data class WeldSessionDto(
     @Json(name = "id") val id: String,
+    @Json(name = "userId") val userId: Int,
     @Json(name = "timestamp") val timestamp: String,
     @Json(name = "process") val process: String,
     @Json(name = "material") val material: String,

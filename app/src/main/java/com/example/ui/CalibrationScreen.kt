@@ -55,138 +55,113 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import android.os.Vibrator
 import android.os.VibrationEffect
-import android.content.Context
-import android.os.Build
-import android.content.BroadcastReceiver
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.BatteryManager
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
-
 
 @Composable
 fun CalibrationScreen(
     state: WeldVisionState,
     viewModel: WeldVisionUiViewModel
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    Row(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        // Left 2/3: Live Camera Feed
+        Box(modifier = Modifier.fillMaxHeight().weight(2f)) {
+            CameraPreviewView(
+                modifier = Modifier.fillMaxSize(),
+                state = state,
+                showArOverlay = false,
+                onArcTracked = { x, y, isTracked ->
+                    viewModel.updateTrackedArc(x, y, isTracked)
+                }
+            )
+            // Center crosshair overlay
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val cx = size.width / 2
+                val cy = size.height / 2
+                drawLine(AccentCyan, Offset(cx - 30f, cy), Offset(cx + 30f, cy), strokeWidth = 1.5f)
+                drawLine(AccentCyan, Offset(cx, cy - 30f), Offset(cx, cy + 30f), strokeWidth = 1.5f)
+                drawCircle(AccentCyan.copy(alpha = 0.4f), radius = 60f, center = Offset(cx, cy),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f))
+            }
+            Text(
+                text = "Align AprilTag on crosshair",
+                color = AccentCyan,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Center).padding(top = 90.dp)
+            )
+        }
+
+        // Right 1/3: Controls
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(1.1f)
+                .background(Color(0xFF121212))
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
+            // Top Header
             Column {
                 Text(
                     text = "BRACKET MOUNT REGISTRATION",
                     color = WarningAmber,
-                    fontSize = 8.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Black,
                     fontFamily = FontFamily.Monospace
                 )
                 Text("Pivot Calibration Sequence", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
-            Box(
-                modifier = Modifier
-                    .background(
-                        if (state.isCalibrating) WarningAmber.copy(alpha = 0.2f) 
-                        else if (state.isCalibrated) AlertEmerald.copy(alpha = 0.2f)
-                        else AlertEmerald.copy(alpha = 0.15f),
-                        RoundedCornerShape(4.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .background(
+                            if (state.isCalibrating) WarningAmber.copy(alpha = 0.4f) 
+                            else if (state.isCalibrated) AlertEmerald.copy(alpha = 0.4f)
+                            else AlertEmerald.copy(alpha = 0.25f),
+                            RoundedCornerShape(6.dp)
+                        )
+                        .border(1.dp, 
+                            if (state.isCalibrating) WarningAmber 
+                            else if (state.isCalibrated) AlertEmerald 
+                            else BorderGrey, 
+                            RoundedCornerShape(6.dp))
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = if (state.isCalibrating) "CALIBRATING..." 
+                               else if (state.isCalibrated) "CALIBRATED ✓" 
+                               else "NOT CALIBRATED",
+                        color = if (state.isCalibrating) WarningAmber 
+                               else if (state.isCalibrated) AlertEmerald
+                               else MutedText,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                    .border(1.dp, 
-                        if (state.isCalibrating) WarningAmber 
-                        else if (state.isCalibrated) AlertEmerald 
-                        else BorderGrey, 
-                        RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = if (state.isCalibrating) "CALIBRATING..." 
-                           else if (state.isCalibrated) "CALIBRATED ✓" 
-                           else "NOT CALIBRATED",
-                    color = if (state.isCalibrating) WarningAmber 
-                           else if (state.isCalibrated) AlertEmerald
-                           else MutedText,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        Row(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Live Camera Feed for AprilTag alignment
-            Box(
-                modifier = Modifier
-                    .weight(5f)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(16.dp))
-                    .border(2.dp, AccentCyan, RoundedCornerShape(16.dp))
-                    .background(Color.Black)
-            ) {
-                CameraPreviewView(
-                    modifier = Modifier.fillMaxSize(),
-                    state = state,
-                    showArOverlay = false,
-                    onArcTracked = { x, y, isTracked ->
-                        viewModel.updateTrackedArc(x, y, isTracked)
-                    }
-                )
-                // Center crosshair overlay
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val cx = size.width / 2
-                    val cy = size.height / 2
-                    // Crosshair lines
-                    drawLine(AccentCyan, Offset(cx - 30f, cy), Offset(cx + 30f, cy), strokeWidth = 1.5f)
-                    drawLine(AccentCyan, Offset(cx, cy - 30f), Offset(cx, cy + 30f), strokeWidth = 1.5f)
-                    // Outer ring
-                    drawCircle(AccentCyan.copy(alpha = 0.4f), radius = 60f, center = Offset(cx, cy),
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f))
                 }
-                Text(
-                    text = "Align AprilTag on crosshair",
-                    color = AccentCyan,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp)
-                )
             }
+            
+            // Middle instructions
+            Text(
+                text = "Center the AprilTag on the crosshair. Tap INITIATE SWEEP, then slowly tilt the phone in a cone arc.",
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 11.sp,
+                lineHeight = 16.sp
+            )
 
-            // Progression Meter Controls
-            Column(
-                modifier = Modifier.weight(7f).fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Center the AprilTag on the crosshair. Tap INITIATE SWEEP, then slowly tilt the phone in a cone arc to collect calibration poses.",
-                    color = MutedText,
-                    fontSize = 10.sp,
-                    lineHeight = 14.sp,
-                    maxLines = 3
-                )
-
+            // Bottom Actions & Progress
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Progression Meter Controls
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(ContainerGrey, RoundedCornerShape(12.dp))
+                        .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+                        .border(1.dp, BorderGrey.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
                         .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Pose Inversion Tracking Convergence", color = MutedText, fontSize = 10.sp)
+                        Text("Tracking Convergence", color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp)
                         Text(
                             text = "${state.calibrationProgress}%",
                             color = if (state.isCalibrated) AlertEmerald else WarningAmber,
@@ -212,16 +187,15 @@ fun CalibrationScreen(
                                 .padding(8.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Text("BRACKET OFFSET (t_C^T):", color = AlertEmerald, fontSize = 8.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
-                            Text("TX: ${String.format("%.1f", state.calibrationOffsetX)} mm", color = Color.White.copy(alpha = 0.8f), fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                            Text("TY: ${String.format("%.1f", state.calibrationOffsetY)} mm", color = Color.White.copy(alpha = 0.8f), fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                            Text("TZ: ${String.format("%.1f", state.calibrationOffsetZ)} mm", color = Color.White.copy(alpha = 0.8f), fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                            Text("Calibration locked. Recalibrate if mount shifts.", color = MutedText, fontSize = 7.sp, fontFamily = FontFamily.Monospace)
+                            Text("OFFSET (t_C^T):", color = AlertEmerald, fontSize = 9.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                            Text("TX: ${String.format("%.1f", state.calibrationOffsetX)} mm", color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                            Text("TY: ${String.format("%.1f", state.calibrationOffsetY)} mm", color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                            Text("TZ: ${String.format("%.1f", state.calibrationOffsetZ)} mm", color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp, fontFamily = FontFamily.Monospace)
                         }
                     }
                 }
 
-                // Calibrate / Recalibrate button
+                // Action Buttons
                 Button(
                     onClick = { viewModel.runCalibration() },
                     enabled = !state.isCalibrating,
@@ -236,17 +210,16 @@ fun CalibrationScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, tint = if (state.isCalibrating) MutedText else OnPrimary)
+                        Icon(Icons.Default.Refresh, contentDescription = null, tint = if (state.isCalibrating) MutedText else OnPrimary, modifier = Modifier.size(16.dp))
                         Text(
-                            if (state.isCalibrated) "RECALIBRATE" else "INITIATE SWEEP ROUTINE",
+                            if (state.isCalibrated) "RECALIBRATE" else "INITIATE SWEEP",
                             color = if (state.isCalibrating) MutedText else OnPrimary,
                             fontWeight = FontWeight.Black,
-                            fontSize = 12.sp
+                            fontSize = 11.sp
                         )
                     }
                 }
-
-                // Reset calibration button (only when calibrated)
+                
                 AnimatedVisibility(visible = state.isCalibrated, enter = fadeIn(), exit = fadeOut()) {
                     OutlinedButton(
                         onClick = { viewModel.resetCalibration() },
@@ -255,9 +228,9 @@ fun CalibrationScreen(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().height(40.dp)
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = null, tint = AlertRed, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Close, contentDescription = null, tint = AlertRed, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("RESET CALIBRATION", color = AlertRed, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Text("RESET", color = AlertRed, fontWeight = FontWeight.Bold, fontSize = 10.sp)
                     }
                 }
             }

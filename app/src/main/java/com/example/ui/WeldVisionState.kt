@@ -8,7 +8,7 @@ import com.example.data.SyncLogEntity
 // ============================================================================
 
 enum class AppScreen {
-    CALIBRATE, SIMULATOR, SETTINGS, RESULTS, PROFILE
+    LOGIN, REGISTER, CALIBRATE, SIMULATOR, SETTINGS, RESULTS, PROFILE
 }
 
 enum class WeldProcess(val label: String, val abbrev: String) {
@@ -70,6 +70,7 @@ data class WeldingModule(
     val voltage: Float,
     val amperage: Int,
     val wireFeedSpeed: Int,
+    val gasFlowRate: Float,
     val description: String,
     val levelRequired: Int = 1
 )
@@ -78,35 +79,35 @@ val preDefinedModules = listOf(
     WeldingModule(
         id = "mig_butt", title = "MIG Butt Joint (1G)",
         process = WeldProcess.GMAW, joint = JointConfig.BUTT, material = MaterialType.STEEL,
-        targetGap = 3.0f, targetSpeed = 4.5f, voltage = 19.5f, amperage = 135, wireFeedSpeed = 230,
+        targetGap = 3.0f, targetSpeed = 4.5f, voltage = 19.5f, amperage = 135, wireFeedSpeed = 230, gasFlowRate = 25.0f,
         description = "Beginner focus. Weld a flat-position butt joint with MIG. Keep arc gap around 3.0mm and travel at 4.5mm/s.",
         levelRequired = 1
     ),
     WeldingModule(
         id = "tig_corner", title = "TIG Corner Joint (2F)",
         process = WeldProcess.GTAW, joint = JointConfig.TEE, material = MaterialType.ALUMINUM,
-        targetGap = 2.0f, targetSpeed = 2.5f, voltage = 13.0f, amperage = 95, wireFeedSpeed = 0,
+        targetGap = 2.0f, targetSpeed = 2.5f, voltage = 13.0f, amperage = 95, wireFeedSpeed = 0, gasFlowRate = 18.0f,
         description = "Precision focus. Weld a vertical corner fillet joint on Aluminum. Requires a tight 2.0mm gap and steady pace.",
         levelRequired = 2
     ),
     WeldingModule(
         id = "stick_lap", title = "Stick Lap Joint (2F)",
         process = WeldProcess.SMAW, joint = JointConfig.LAP, material = MaterialType.STEEL,
-        targetGap = 3.8f, targetSpeed = 3.2f, voltage = 24.0f, amperage = 110, wireFeedSpeed = 0,
+        targetGap = 3.8f, targetSpeed = 3.2f, voltage = 24.0f, amperage = 110, wireFeedSpeed = 0, gasFlowRate = 0.0f,
         description = "Horizontal lap joint training. Maintain a consistent 3.8mm arc gap as stick electrode is consumed.",
         levelRequired = 1
     ),
     WeldingModule(
         id = "mig_tee", title = "MIG Tee Fillet (2F)",
         process = WeldProcess.GMAW, joint = JointConfig.TEE, material = MaterialType.STEEL,
-        targetGap = 3.2f, targetSpeed = 5.0f, voltage = 21.0f, amperage = 155, wireFeedSpeed = 260,
+        targetGap = 3.2f, targetSpeed = 5.0f, voltage = 21.0f, amperage = 155, wireFeedSpeed = 260, gasFlowRate = 28.0f,
         description = "High wire-feed speed fillet weld. Practice keeping a stable work angle and trailing gun drag angle.",
         levelRequired = 3
     ),
     WeldingModule(
         id = "tig_butt_titanium", title = "TIG Butt Joint (1G) - Titanium",
         process = WeldProcess.GTAW, joint = JointConfig.BUTT, material = MaterialType.TITANIUM,
-        targetGap = 1.5f, targetSpeed = 1.8f, voltage = 11.5f, amperage = 80, wireFeedSpeed = 0,
+        targetGap = 1.5f, targetSpeed = 1.8f, voltage = 11.5f, amperage = 80, wireFeedSpeed = 0, gasFlowRate = 15.0f,
         description = "Advanced precision. Thin bead profile on Titanium with a low 1.5mm gap constraint.",
         levelRequired = 4
     )
@@ -117,7 +118,7 @@ val preDefinedModules = listOf(
 // ============================================================================
 
 data class WeldVisionState(
-    val currentScreen: AppScreen = AppScreen.SIMULATOR,
+    val currentScreen: AppScreen = AppScreen.LOGIN,
     val selectedModuleId: String = "mig_butt",
     val currentMaterial: MaterialType = MaterialType.STEEL,
     val currentJoint: JointConfig = JointConfig.LAP,
@@ -140,6 +141,8 @@ data class WeldVisionState(
     val voltage: Float = 18.5f,
     val amperage: Int = 140,
     val wireFeedSpeed: Int = 220,
+    val gasFlowRate: Float = 25.0f,
+    val currentUserId: Int? = null,
     val isCalibrating: Boolean = false,
     val calibrationProgress: Int = 0,
     val isCalibrated: Boolean = false,
@@ -180,11 +183,13 @@ data class WeldVisionState(
         WeldSession("session_2", "Jul 13, 2026 09:15", "SMAW", "Carbon Steel", "Tee Joint (2F)", 84, 89, 78, 86, 0, "Low", "Good overall consistency. Solid control of travel angle; try to smooth out wrist transitions.")
     ),
     val profileName: String = "Weld Apprentice",
+    val matricNo: String = "",
     val gmawWeldTime: Int = 240,
     val gtawWeldTime: Int = 95,
     val smawWeldTime: Int = 180,
     val isEditingName: Boolean = false,
     val editedName: String = "",
+    val editedMatricNo: String = "",
     val unlockedAchievementTitle: String? = null,
     val unlockedAchievementDesc: String? = null,
     val syncLogs: List<SyncLogEntity> = emptyList(),

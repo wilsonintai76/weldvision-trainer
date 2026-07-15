@@ -42,20 +42,39 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
         }
         viewModelScope.launch {
             repository.initializeDatabaseIfEmpty()
-            repository.allWeldSessions.collect { dbSessions ->
-                _state.update { state -> state.copy(sessionHistory = dbSessions.map {
-                    WeldSession(it.id, it.timestamp, it.process, it.material, it.joint, it.grade,
-                        it.arcLengthStability, it.travelSpeedUniformity, it.angleOrientationStability,
-                        it.defectCount, it.porosityRisk, it.coachingPhrase)
-                }) }
+            
+            // Auto-login last active user
+            val lastUser = repository.getLastActiveUser()
+            if (lastUser != null) {
+                _state.update { it.copy(
+                    currentUserId = lastUser.id,
+                    currentScreen = AppScreen.SIMULATOR
+                )}
             }
         }
         viewModelScope.launch {
-            repository.userProfile.collect { profile ->
-                if (profile != null) _state.update { it.copy(
-                    profileName = profile.name, userLevel = profile.level, experiencePoints = profile.experiencePoints,
-                    gmawWeldTime = profile.gmawWeldTimeSeconds, gtawWeldTime = profile.gtawWeldTimeSeconds,
-                    smawWeldTime = profile.smawWeldTimeSeconds) }
+            _state.map { it.currentUserId }.distinctUntilChanged().collectLatest { userId ->
+                if (userId != null) {
+                    launch {
+                        repository.getUserProfile(userId).collect { profile ->
+                            if (profile != null) _state.update { it.copy(
+                                profileName = profile.name, matricNo = profile.matricNo, userLevel = profile.level, experiencePoints = profile.experiencePoints,
+                                gmawWeldTime = profile.gmawWeldTimeSeconds, gtawWeldTime = profile.gtawWeldTimeSeconds,
+                                smawWeldTime = profile.smawWeldTimeSeconds) }
+                        }
+                    }
+                    launch {
+                        repository.getAllWeldSessions(userId).collect { dbSessions ->
+                            _state.update { state -> state.copy(sessionHistory = dbSessions.map {
+                                WeldSession(it.id, it.timestamp, it.process, it.material, it.joint, it.grade,
+                                    it.arcLengthStability, it.travelSpeedUniformity, it.angleOrientationStability,
+                                    it.defectCount, it.porosityRisk, it.coachingPhrase)
+                            }) }
+                        }
+                    }
+                } else {
+                     _state.update { it.copy(sessionHistory = emptyList()) }
+                }
             }
         }
         viewModelScope.launch {
@@ -220,7 +239,7 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
     fun updateTagPose(tagTranslationMm: FloatArray?) {
         val cur = _state.value
         val ts = hybridTracker.update(
-            tagTranslationMm, cur.gyroWorkAngle, cur.gyroTravelAngle, cur.gyroAngularSpeed
+            tagTranslationMm, null // TODO: Wire up actual camera rotation Quaternion from JNI
         )
         _state.update { it.copy(
             travelProgress = ts.travelProgress,
@@ -274,7 +293,7 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
         val m = preDefinedModules.firstOrNull { it.id == moduleId } ?: return
         _state.update { it.copy(selectedModuleId = moduleId, currentProcess = m.process, currentJoint = m.joint,
             currentMaterial = m.material, targetGap = m.targetGap, targetSpeed = m.targetSpeed,
-            voltage = m.voltage, amperage = m.amperage, wireFeedSpeed = m.wireFeedSpeed,
+            voltage = m.voltage, amperage = m.amperage, wireFeedSpeed = m.wireFeedSpeed, gasFlowRate = m.gasFlowRate,
             isPracticeRunActive = false, weldProgress = 0f, scoreTicks = 0, scoreSum = 0) }
     }
     fun updateProcess(process: WeldProcess) { _state.update { it.copy(currentProcess = process) } }
@@ -291,6 +310,7 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
     fun adjustVoltage(delta: Float) { _state.update { it.copy(voltage = (it.voltage + delta).coerceIn(10f, 35f)) } }
     fun adjustFeedSpeed(delta: Int) { _state.update { it.copy(wireFeedSpeed = (it.wireFeedSpeed + delta).coerceIn(50, 600)) } }
     fun adjustAmperage(delta: Int) { _state.update { it.copy(amperage = (it.amperage + delta).coerceIn(30, 300)) } }
+    fun adjustGasFlowRate(delta: Float) { _state.update { it.copy(gasFlowRate = (it.gasFlowRate + delta).coerceIn(0f, 50f)) } }
     fun updateTravelSpeed(speed: Float) { _state.update { it.copy(travelSpeed = speed) } }
     fun updateTrackedArc(x: Float, y: Float, isTracked: Boolean) { _state.update { it.copy(trackedArcX = x, trackedArcY = y, isArcTracked = isTracked) } }
 
@@ -298,12 +318,14 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
     fun setResultsTab(tab: Int) { _state.update { it.copy(activeResultsTab = tab) } }
 
     // ── Profile ──
-    fun startEditingName() { _state.update { it.copy(isEditingName = true, editedName = it.profileName) } }
+    fun startEditingName() { _state.update { it.copy(isEditingName = true, editedName = it.profileName, editedMatricNo = it.matricNo) } }
     fun updateEditedName(name: String) { _state.update { it.copy(editedName = name) } }
-    fun saveProfileName() {
+    fun updateEditedMatricNo(matric: String) { _state.update { it.copy(editedMatricNo = matric) } }
+    fun saveProfileData() {
         viewModelScope.launch {
             val n = _state.value.editedName.trim()
-            if (n.isNotEmpty()) { val p = repository.getProfileDirect() ?: UserProfileEntity(); repository.saveUserProfile(p.copy(name = n)) }
+            val m = _state.value.editedMatricNo.trim()
+            if (n.isNotEmpty()) { val p = repository.getProfileDirect(_state.value.currentUserId ?: 1) ?: UserProfileEntity(); repository.saveUserProfile(p.copy(name = n, matricNo = m)) }
             _state.update { it.copy(isEditingName = false) }
         }
     }
@@ -311,7 +333,7 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
     fun dismissAchievementToast() { _state.update { it.copy(unlockedAchievementTitle = null, unlockedAchievementDesc = null) } }
 
     // ── Sync ──
-    fun performCloudSync() { viewModelScope.launch { syncManager.sync() } }
+    fun performCloudSync() { viewModelScope.launch { _state.value.currentUserId?.let { syncManager.sync(it.toLong()) } } }
     fun clearSyncDatabaseLogs() { viewModelScope.launch { repository.clearSyncLogs() } }
     fun updateSyncSettings(serverUrl: String, authToken: String, isAutoSyncEnabled: Boolean) {
         syncManager.serverUrl = serverUrl; syncManager.authToken = authToken; syncManager.isAutoSyncEnabled = isAutoSyncEnabled
@@ -329,13 +351,13 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
             porosityRisk = porosityRisk, lastCoachingPhrase = coachingPhrase, activeResultsTab = 0, currentScreen = AppScreen.RESULTS) }
         viewModelScope.launch {
             val cur = _state.value; val prev = cur.sessionHistory
-            val sessionEntity = WeldSessionEntity(id = "session_${System.currentTimeMillis()}", timestamp = ts,
+            val sessionEntity = WeldSessionEntity(id = "session_${System.currentTimeMillis()}", userId = cur.currentUserId ?: 1, timestamp = ts,
                 process = cur.currentProcess.abbrev, material = cur.currentMaterial.label, joint = cur.currentJoint.label,
                 grade = avgGrade, arcLengthStability = arcLengthStability, travelSpeedUniformity = travelSpeedUniformity,
                 angleOrientationStability = angleOrientationStability, defectCount = defectCount,
                 porosityRisk = porosityRisk, coachingPhrase = coachingPhrase, weldTimeSeconds = 12)
             repository.insertWeldSession(sessionEntity)
-            val profile = repository.getProfileDirect() ?: UserProfileEntity()
+            val profile = repository.getProfileDirect(cur.currentUserId ?: 1) ?: UserProfileEntity()
             var gmaw = profile.gmawWeldTimeSeconds; var gtaw = profile.gtawWeldTimeSeconds; var smaw = profile.smawWeldTimeSeconds
             when (cur.currentProcess) { WeldProcess.GMAW -> gmaw += 12; WeldProcess.GTAW -> gtaw += 12; WeldProcess.SMAW -> smaw += 12 }
             repository.saveUserProfile(profile.copy(level = if (profile.experiencePoints + 150 >= 2000) 4 else profile.level,
@@ -353,5 +375,73 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
             }
             if (title != null) _state.update { it.copy(unlockedAchievementTitle = title, unlockedAchievementDesc = desc) }
         }
+    }
+
+    // ── Authentication ──
+    fun registerUser(email: String, name: String, matricNo: String, passwordHash: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val existing = repository.getUserByEmail(email)
+                if (existing != null) {
+                    onError("Email already registered")
+                    return@launch
+                }
+                val newUser = UserProfileEntity(
+                    id = 0, // Auto-generated
+                    name = name,
+                    email = email,
+                    matricNo = matricNo,
+                    passwordHash = passwordHash
+                )
+                repository.saveUserProfile(newUser)
+                val insertedUser = repository.getUserByEmail(email)
+                if (insertedUser != null) {
+                    _state.update { it.copy(currentUserId = insertedUser.id, currentScreen = AppScreen.SIMULATOR) }
+                    onSuccess()
+                } else {
+                    onError("Failed to create user")
+                }
+            } catch (e: Exception) {
+                onError("Error: ${e.message}")
+            }
+        }
+    }
+
+    fun loginUser(email: String, passwordHash: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val user = repository.getUserByEmail(email)
+                if (user == null) {
+                    onError("User not found")
+                } else if (user.passwordHash != passwordHash) {
+                    onError("Incorrect password")
+                } else {
+                    _state.update { it.copy(currentUserId = user.id, currentScreen = AppScreen.SIMULATOR) }
+                    onSuccess()
+                }
+            } catch (e: Exception) {
+                onError("Error: ${e.message}")
+            }
+        }
+    }
+
+    fun loginBiometric(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val user = repository.getLastActiveUser()
+                if (user == null) {
+                    onError("No previous user found. Please login with email/password first.")
+                } else {
+                    _state.update { it.copy(currentUserId = user.id, currentScreen = AppScreen.SIMULATOR) }
+                    onSuccess()
+                }
+            } catch (e: Exception) {
+                onError("Error: ${e.message}")
+            }
+        }
+    }
+
+    fun logout() {
+        _state.update { it.copy(currentUserId = null, currentScreen = AppScreen.LOGIN) }
     }
 }

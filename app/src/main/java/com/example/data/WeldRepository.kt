@@ -3,8 +3,8 @@ package com.example.data
 import kotlinx.coroutines.flow.Flow
 
 class WeldRepository(private val weldDao: WeldDao) {
-    val userProfile: Flow<UserProfileEntity?> = weldDao.getUserProfile()
-    val allWeldSessions: Flow<List<WeldSessionEntity>> = weldDao.getAllWeldSessions()
+    fun getUserProfile(userId: Int): Flow<UserProfileEntity?> = weldDao.getUserProfile(userId)
+    fun getAllWeldSessions(userId: Int): Flow<List<WeldSessionEntity>> = weldDao.getAllWeldSessions(userId)
     val syncLogs: Flow<List<SyncLogEntity>> = weldDao.getSyncLogs(30)
 
     suspend fun insertWeldSession(session: WeldSessionEntity) {
@@ -15,24 +15,32 @@ class WeldRepository(private val weldDao: WeldDao) {
         weldDao.insertUserProfile(profile)
     }
 
-    suspend fun getProfileDirect(): UserProfileEntity? {
-        return weldDao.getUserProfileDirect()
+    suspend fun getProfileDirect(userId: Int): UserProfileEntity? {
+        return weldDao.getUserProfileDirect(userId)
     }
 
-    suspend fun getUnsyncedWeldSessions(): List<WeldSessionEntity> {
-        return weldDao.getUnsyncedWeldSessions()
+    suspend fun getUserByEmail(email: String): UserProfileEntity? {
+        return weldDao.getUserByEmail(email)
+    }
+
+    suspend fun getLastActiveUser(): UserProfileEntity? {
+        return weldDao.getLastActiveUser()
+    }
+
+    suspend fun getUnsyncedWeldSessions(userId: Int): List<WeldSessionEntity> {
+        return weldDao.getUnsyncedWeldSessions(userId)
     }
 
     suspend fun markWeldSessionsAsSynced(ids: List<String>) {
         weldDao.markWeldSessionsAsSynced(ids)
     }
 
-    suspend fun markUserProfileAsSynced() {
-        weldDao.markUserProfileAsSynced()
+    suspend fun markUserProfileAsSynced(userId: Int) {
+        weldDao.markUserProfileAsSynced(userId)
     }
 
-    suspend fun getAllWeldSessionsDirect(): List<WeldSessionEntity> {
-        return weldDao.getAllWeldSessionsDirect()
+    suspend fun getAllWeldSessionsDirect(userId: Int): List<WeldSessionEntity> {
+        return weldDao.getAllWeldSessionsDirect(userId)
     }
 
     suspend fun insertWeldSessions(sessions: List<WeldSessionEntity>) {
@@ -53,15 +61,13 @@ class WeldRepository(private val weldDao: WeldDao) {
     suspend fun saveCalibration(cal: CalibrationEntity) = weldDao.saveCalibration(cal)
 
     suspend fun initializeDatabaseIfEmpty() {
-        val existingProfile = weldDao.getUserProfileDirect()
-        if (existingProfile == null) {
-            // Populate default user profile
-            weldDao.insertUserProfile(UserProfileEntity())
-
-            // Populate some historic weld sessions for GMAW, GTAW, SMAW to show rich trends!
+        val lastUser = weldDao.getLastActiveUser()
+        if (lastUser == null) {
+            // Populate default historic weld sessions for GMAW, GTAW, SMAW to show rich trends!
             val initialSessions = listOf(
                 WeldSessionEntity(
                     id = "session_initial_1",
+                    userId = 1,
                     timestamp = "Jul 12, 2026 14:32",
                     process = "GMAW",
                     material = "Carbon Steel",
@@ -77,6 +83,7 @@ class WeldRepository(private val weldDao: WeldDao) {
                 ),
                 WeldSessionEntity(
                     id = "session_initial_2",
+                    userId = 1,
                     timestamp = "Jul 11, 2026 09:15",
                     process = "GTAW",
                     material = "Aluminum",
@@ -92,6 +99,7 @@ class WeldRepository(private val weldDao: WeldDao) {
                 ),
                 WeldSessionEntity(
                     id = "session_initial_3",
+                    userId = 1,
                     timestamp = "Jul 10, 2026 16:45",
                     process = "SMAW",
                     material = "Carbon Steel",
@@ -107,6 +115,7 @@ class WeldRepository(private val weldDao: WeldDao) {
                 ),
                 WeldSessionEntity(
                     id = "session_initial_4",
+                    userId = 1,
                     timestamp = "Jul 13, 2026 11:20",
                     process = "GMAW",
                     material = "Titanium",

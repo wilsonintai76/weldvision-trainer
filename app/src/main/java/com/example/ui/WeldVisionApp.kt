@@ -3,6 +3,8 @@ package com.example.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -217,32 +219,71 @@ fun WeldVisionLandscapeApp(
     }
 
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().systemBarsPadding(),
         color = DeepSpaceBlue
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
+            val isAuthScreen = state.currentScreen == AppScreen.LOGIN || state.currentScreen == AppScreen.REGISTER
+            val isImmersive = state.currentScreen == AppScreen.SIMULATOR && state.isPracticeRunActive
+            val showBars = !isImmersive && !isAuthScreen
+
             Column(modifier = Modifier.fillMaxSize()) {
                 
                 // 1. Android Top Bezel Status Bar
-                LandscapeTopStatusBar(state = state, onPowerSaveToggle = { viewModel.togglePowerSaveMode() })
+                AnimatedVisibility(
+                    visible = showBars,
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
+                ) {
+                    LandscapeTopStatusBar(state = state, onPowerSaveToggle = { viewModel.togglePowerSaveMode() })
+                }
 
                 // 2. Center Dynamic Screen Content (Controlled via navigation state)
                 Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                     when (state.currentScreen) {
-                        AppScreen.SIMULATOR -> SimulatorScreen(state, viewModel)
-                        AppScreen.CALIBRATE -> CalibrationScreen(state, viewModel)
-                        AppScreen.SETTINGS -> SettingsScreen(state, viewModel)
-                        AppScreen.RESULTS -> ResultsScreen(state, viewModel)
-                        AppScreen.PROFILE -> ProfileScreen(state, viewModel)
+                        AppScreen.LOGIN -> {
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            LoginScreen(viewModel, onNavigateToRegister = { viewModel.navigateTo(AppScreen.REGISTER) })
+                        }
+                        AppScreen.REGISTER -> {
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            RegistrationScreen(viewModel, onNavigateToLogin = { viewModel.navigateTo(AppScreen.LOGIN) })
+                        }
+                        AppScreen.SIMULATOR -> {
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                            SimulatorScreen(state, viewModel)
+                        }
+                        AppScreen.CALIBRATE -> {
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                            CalibrationScreen(state, viewModel)
+                        }
+                        AppScreen.SETTINGS -> {
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            SettingsScreen(state, viewModel)
+                        }
+                        AppScreen.RESULTS -> {
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            ResultsScreen(state, viewModel)
+                        }
+                        AppScreen.PROFILE -> {
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            ProfileScreen(state, viewModel)
+                        }
                     }
                 }
 
                 // 3. Android Navigation Bar (Bottom persistent menu)
-                AndroidBottomNavBar(
-                    currentScreen = state.currentScreen,
-                    isPowerSaveEnabled = state.isPowerSaveEnabled,
-                    onNavigate = { viewModel.navigateTo(it) }
-                )
+                AnimatedVisibility(
+                    visible = showBars,
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
+                ) {
+                    AndroidBottomNavBar(
+                        currentScreen = state.currentScreen,
+                        isPowerSaveEnabled = state.isPowerSaveEnabled,
+                        onNavigate = { viewModel.navigateTo(it) }
+                    )
+                }
             }
 
         // Dynamic Achievement Unlocked Floating Toast overlay
@@ -337,3 +378,23 @@ fun WeldVisionLandscapeApp(
 // ============================================================================
 // 3. NAVIGATION & BAR OVERLAYS (Top & Bottom persistent components)
 // ============================================================================
+
+@Composable
+fun LockScreenOrientation(orientation: Int) {
+    val context = LocalContext.current
+    DisposableEffect(orientation) {
+        val activity = context.findActivity() ?: return@DisposableEffect onDispose {}
+        val originalOrientation = activity.requestedOrientation
+        activity.requestedOrientation = orientation
+        onDispose {
+            activity.requestedOrientation = originalOrientation
+        }
+    }
+}
+
+fun Context.findActivity(): android.app.Activity? = when (this) {
+    is android.app.Activity -> this
+    is android.content.ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+

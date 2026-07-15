@@ -73,15 +73,13 @@ fun SimulatorScreen(state: WeldVisionState, viewModel: WeldVisionUiViewModel) {
     WeldVoiceFeedbackHandler(state = state)
     WeldHapticFeedbackHandler(state = state)
     var showModulesOverlay by remember { mutableStateOf(false) }
+    var showHudSettings by remember { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxSize()) {
         
         // 1. Real-time Camera Feed (replacing the simulated drawing)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .border(2.dp, BorderGrey, RoundedCornerShape(24.dp))
                 .background(Color.Black)
                 .pointerInput(Unit) {
                     detectTapGestures { offset ->
@@ -195,15 +193,11 @@ fun SimulatorScreen(state: WeldVisionState, viewModel: WeldVisionUiViewModel) {
             visible = showTelemetry,
             enter = fadeIn(),
             exit = fadeOut(),
-            modifier = Modifier.align(Alignment.TopCenter).padding(top = 16.dp)
+            modifier = Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = 240.dp)
         ) {
-        Row(
-            modifier = Modifier
-                .background(ContainerGrey.copy(alpha = 0.85f), RoundedCornerShape(16.dp))
-                .border(1.dp, BorderGrey.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.Start
         ) {
             // Derive travel speed from gyro angular velocity (°/s → mm/s)
             val estTravelSpeed = (state.gyroAngularSpeed / 2f).coerceIn(0.5f, 10f)
@@ -213,124 +207,183 @@ fun SimulatorScreen(state: WeldVisionState, viewModel: WeldVisionUiViewModel) {
             val gapFromShake = (3f + state.gyroAngularSpeed / 20f).coerceIn(1.5f, 6f)
             val isGapOk = gapFromShake in (state.targetGap - 1f)..(state.targetGap + 1f)
 
-            // Speed — derived from phone movement (°/s → mm/s)
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("SPEED", color = MutedText, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                Text("${String.format("%.1f", estTravelSpeed)}mm/s", color = if (isSpeedOk) AlertEmerald else AlertRed, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-            }
-            // Travel angle — torch angle relative to travel direction
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("TR. ANGLE", color = MutedText, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                Text("${String.format("%.1f", state.gyroTravelAngle)}°", color = if (isTravelOk) AlertEmerald else AlertRed, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-            }
-            // Work angle — torch angle relative to workpiece
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("WORK ANGLE", color = MutedText, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                Text("${String.format("%.1f", state.gyroWorkAngle)}°", color = if (isWorkOk) AlertEmerald else AlertRed, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-            }
-            // Arc gap — derived from gyro stability (shaky = wide gap)
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("ARC GAP", color = MutedText, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                Text("${String.format("%.1f", gapFromShake)}mm", color = if (isGapOk) AlertEmerald else AlertRed, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-            }
-            // Gyro reference
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                    if (state.isGyroActive) Box(Modifier.size(5.dp).background(AlertEmerald, CircleShape))
-                    Text("GYRO", color = if (state.isGyroActive) AlertEmerald else MutedText, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                }
-                Text("${state.gyroAngularSpeed.toInt()}°/s", color = WarningAmber, fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-            }
-            
-            // Voice feedback quick toggle button (Non-essential: Dimmed under Power Save Mode)
-            IconButton(
-                onClick = { viewModel.toggleVoiceFeedback() },
-                modifier = Modifier
-                    .size(28.dp)
-                    .alpha(if (state.isPowerSaveEnabled) 0.35f else 1.0f)
-            ) {
-                Icon(
-                    imageVector = if (state.isVoiceFeedbackEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.Default.VolumeOff,
-                    contentDescription = "Voice Feedback Toggle",
-                    tint = if (state.isVoiceFeedbackEnabled) WarningAmber else MutedText,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-
-            // Haptic feedback quick toggle button (Non-essential: Dimmed under Power Save Mode)
-            IconButton(
-                onClick = { viewModel.toggleHapticFeedback() },
-                modifier = Modifier
-                    .size(28.dp)
-                    .alpha(if (state.isPowerSaveEnabled) 0.35f else 1.0f)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Vibration,
-                    contentDescription = "Haptic Feedback Toggle",
-                    tint = if (state.isHapticFeedbackEnabled) WarningAmber else MutedText,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-
-            // Quick Access Onboarding Guide Help
-            IconButton(
-                onClick = { viewModel.setOnboardingOverlayVisible(true) },
-                modifier = Modifier
-                    .size(28.dp)
-                    .alpha(if (state.isPowerSaveEnabled) 0.35f else 1.0f)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "Positioning Help Guide",
-                    tint = AccentCyan,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-
-            // Collab toggle inline (Non-essential: Dimmed under Power Save Mode)
+            // Speed
             Row(
                 modifier = Modifier
-                    .background(Color.Transparent, RoundedCornerShape(8.dp))
-                    .border(1.dp, if (state.isInstructorJoined) AccentCyan else BorderGrey, RoundedCornerShape(8.dp))
-                    .clickable { viewModel.toggleInstructor() }
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .alpha(if (state.isPowerSaveEnabled) 0.35f else 1.0f),
+                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(
-                    Icons.Default.People, 
-                    contentDescription = "Collab", 
-                    tint = if (state.isInstructorJoined) AccentCyan else MutedText,
-                    modifier = Modifier.size(12.dp)
-                )
-                Text(if (state.isInstructorJoined) "LIVE" else "INVITE", color = if (state.isInstructorJoined) Color.White else MutedText, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                Text("SPEED", color = Color.White.copy(alpha = 0.7f), fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                Text("${String.format("%.1f", estTravelSpeed)}", color = if (isSpeedOk) AlertEmerald else AlertRed, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
             }
-
-            // Minimal HUD toggle (eye icon)
-            IconButton(
-                onClick = { viewModel.toggleMinimalHud() },
-                modifier = Modifier.size(24.dp)
+            // Travel angle
+            Row(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text("TR. ANGLE", color = Color.White.copy(alpha = 0.7f), fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                Text("${String.format("%.1f", state.gyroTravelAngle)}°", color = if (isTravelOk) AlertEmerald else AlertRed, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+            }
+            // Work angle
+            Row(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text("WORK ANGLE", color = Color.White.copy(alpha = 0.7f), fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                Text("${String.format("%.1f", state.gyroWorkAngle)}°", color = if (isWorkOk) AlertEmerald else AlertRed, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+            }
+            // Arc gap
+            Row(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text("ARC GAP", color = Color.White.copy(alpha = 0.7f), fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                Text("${String.format("%.1f", gapFromShake)}", color = if (isGapOk) AlertEmerald else AlertRed, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+            }
+            Row(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    if (state.isGyroActive) Box(Modifier.size(5.dp).background(AlertEmerald, CircleShape))
+                    Text("GYRO", color = if (state.isGyroActive) AlertEmerald else Color.White.copy(alpha = 0.7f), fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                }
+                Text("${state.gyroAngularSpeed.toInt()}°/s", color = WarningAmber, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+            }
+            
+            // Settings Icon to expand/collapse HUD controls
+            Box(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                    .clip(CircleShape)
+                    .clickable { showHudSettings = !showHudSettings }
+                    .padding(8.dp)
             ) {
                 Icon(
-                    imageVector = if (state.isMinimalHud) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    contentDescription = "Toggle HUD",
-                    tint = if (state.isMinimalHud) MutedText else AccentCyan,
-                    modifier = Modifier.size(14.dp)
+                    imageVector = if (showHudSettings) Icons.Default.Close else Icons.Default.Settings,
+                    contentDescription = "Toggle Settings",
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
                 )
             }
 
-            // Weld mode toggle (straight ↔ weaving)
-            IconButton(
-                onClick = { viewModel.toggleWeldMode() },
-                modifier = Modifier.size(24.dp)
+            AnimatedVisibility(
+                visible = showHudSettings,
+                enter = fadeIn() + androidx.compose.animation.expandHorizontally(),
+                exit = fadeOut() + androidx.compose.animation.shrinkHorizontally()
             ) {
-                Icon(
-                    imageVector = if (state.weldMode == WeldMode.WEAVING) Icons.Default.Timeline else Icons.Default.ShowChart,
-                    contentDescription = "Toggle Weld Mode",
-                    tint = if (state.weldMode == WeldMode.WEAVING) AccentCyan else MutedText,
-                    modifier = Modifier.size(14.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(16.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Voice feedback quick toggle button
+                    IconButton(
+                        onClick = { viewModel.toggleVoiceFeedback() },
+                        modifier = Modifier
+                            .size(28.dp)
+                            .alpha(if (state.isPowerSaveEnabled) 0.35f else 1.0f)
+                    ) {
+                        Icon(
+                            imageVector = if (state.isVoiceFeedbackEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.Default.VolumeOff,
+                            contentDescription = "Voice Feedback Toggle",
+                            tint = if (state.isVoiceFeedbackEnabled) WarningAmber else MutedText,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    // Haptic feedback quick toggle button
+                    IconButton(
+                        onClick = { viewModel.toggleHapticFeedback() },
+                        modifier = Modifier
+                            .size(28.dp)
+                            .alpha(if (state.isPowerSaveEnabled) 0.35f else 1.0f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Vibration,
+                            contentDescription = "Haptic Feedback Toggle",
+                            tint = if (state.isHapticFeedbackEnabled) WarningAmber else MutedText,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    // Quick Access Onboarding Guide Help
+                    IconButton(
+                        onClick = { viewModel.setOnboardingOverlayVisible(true) },
+                        modifier = Modifier
+                            .size(28.dp)
+                            .alpha(if (state.isPowerSaveEnabled) 0.35f else 1.0f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Positioning Help Guide",
+                            tint = AccentCyan,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    // Collab toggle inline
+                    Row(
+                        modifier = Modifier
+                            .background(Color.Transparent, RoundedCornerShape(8.dp))
+                            .border(1.dp, if (state.isInstructorJoined) AccentCyan else BorderGrey, RoundedCornerShape(8.dp))
+                            .clickable { viewModel.toggleInstructor() }
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .alpha(if (state.isPowerSaveEnabled) 0.35f else 1.0f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.People, 
+                            contentDescription = "Collab", 
+                            tint = if (state.isInstructorJoined) AccentCyan else MutedText,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(if (state.isInstructorJoined) "LIVE" else "INVITE", color = if (state.isInstructorJoined) Color.White else MutedText, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    // Minimal HUD toggle (eye icon)
+                    IconButton(
+                        onClick = { viewModel.toggleMinimalHud() },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (state.isMinimalHud) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = "Toggle HUD",
+                            tint = if (state.isMinimalHud) MutedText else AccentCyan,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+
+                    // Weld mode toggle (straight ↔ weaving)
+                    IconButton(
+                        onClick = { viewModel.toggleWeldMode() },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (state.weldMode == WeldMode.WEAVING) Icons.Default.Timeline else Icons.Default.ShowChart,
+                            contentDescription = "Toggle Weld Mode",
+                            tint = if (state.weldMode == WeldMode.WEAVING) AccentCyan else MutedText,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
             }
         }
         } // End AnimatedVisibility
@@ -534,8 +587,12 @@ fun SimulatorScreen(state: WeldVisionState, viewModel: WeldVisionUiViewModel) {
                     
                     val defCount = if (finalAvgGrade < 70) 2 else if (finalAvgGrade < 84) 1 else 0
                     val isWindy = state.currentEnvironment == EnvironmentFactor.WINDY
+                    val usesGas = state.currentProcess != WeldProcess.SMAW
+                    val badGasFlow = usesGas && (state.gasFlowRate < 15f || state.gasFlowRate > 35f)
+                    
                     val porosity = when {
                         isWindy -> "High (Gas Shield Blown)"
+                        badGasFlow -> "High (Improper Gas Flow)"
                         finalAvgGrade < 72 -> "High"
                         finalAvgGrade < 85 -> "Medium"
                         else -> "Low"
@@ -570,12 +627,8 @@ fun SimulatorScreen(state: WeldVisionState, viewModel: WeldVisionUiViewModel) {
                     .padding(8.dp)
                     .clip(RoundedCornerShape(24.dp))
             ) {
-                val progressFraction = state.weldProgress / 100f
-                val paddingX = 80.dp.toPx()
-                val totalWidth = size.width - (paddingX * 2)
-                
-                val arcX = paddingX + (totalWidth * progressFraction)
-                val arcY = size.height * 0.72f
+                val arcX = size.width * 0.5f
+                val arcY = size.height * 0.5f
                 
                 val pulseScale = 1.0f + 0.15f * kotlin.math.sin(state.weldProgress * 1.5f)
                 
@@ -619,8 +672,8 @@ fun SimulatorScreen(state: WeldVisionState, viewModel: WeldVisionUiViewModel) {
         // 2c. Compact Practice Run Controller (pill design)
         Box(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 8.dp)
+                .align(Alignment.TopCenter)
+                .padding(top = 32.dp)
                 .background(ContainerGrey.copy(alpha = 0.85f), RoundedCornerShape(20.dp))
                 .border(0.5.dp, if (state.isPracticeRunActive) AccentCyan.copy(alpha = 0.4f) else BorderGrey.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
                 .padding(horizontal = 14.dp, vertical = 6.dp)
@@ -749,10 +802,12 @@ fun SimulatorScreen(state: WeldVisionState, viewModel: WeldVisionUiViewModel) {
         // --- INTERACTIVE TRAINING MODULES OVERLAY & FLOATING SELECTOR ---
         
         // Floating Vertical Tab to open menu
-        Box(
+        AnimatedVisibility(
+            visible = !state.isPracticeRunActive,
+            enter = fadeIn(),
+            exit = fadeOut(),
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .padding(start = 8.dp)
         ) {
             if (!showModulesOverlay) {
                 Column(

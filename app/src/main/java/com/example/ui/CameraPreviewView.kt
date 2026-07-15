@@ -1,5 +1,8 @@
 package com.example.ui
 
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.Thermostat
+
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -437,7 +440,7 @@ fun SimulatedWeldFeed(modifier: Modifier, isPowerSaveEnabled: Boolean, showAutho
 
     Box(modifier = modifier.background(Color(0xFF0F1012)).fillMaxSize(), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val w = size.width; val h = size.height; val cy = h * 0.55f; val ax = w * arcXProgress
+            val w = size.width; val h = size.height; val cy = h * 0.5f; val ax = w * arcXProgress
             drawRect(Color(0xFF2C2D31), androidx.compose.ui.geometry.Offset(0f, 0f), androidx.compose.ui.geometry.Size(w, cy - 10f))
             drawRect(Color(0xFF1E1F23), androidx.compose.ui.geometry.Offset(0f, cy + 10f), androidx.compose.ui.geometry.Size(w, h - cy - 10f))
             drawCircle(Brush.radialGradient(listOf(Color.White, Color(0xFFFFEA7A).copy(alpha = 0.85f), Color(0xFFFF9800).copy(alpha = 0.45f), Color.Transparent)), center = Offset(ax, cy), radius = arcGlow * density)
@@ -462,11 +465,12 @@ fun SimulatedWeldFeed(modifier: Modifier, isPowerSaveEnabled: Boolean, showAutho
 @Composable
 fun ARWeldWorkspaceOverlay(modifier: Modifier, state: WeldVisionState, isPowerSaveEnabled: Boolean) {
     val pulseAlpha by rememberInfiniteTransition(label = "pulse").animateFloat(0.3f, 0.7f, infiniteRepeatable(tween(800), RepeatMode.Reverse), label = "pulse")
+    var isThermalExpanded by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier) {
+    Box(modifier = modifier) {
         // ── Always-visible target guide (joint seam + calibrated/gyro crosshair) ──
-        Canvas(modifier = Modifier.fillMaxSize().weight(1f)) {
-            val w = size.width; val h = size.height; val cy = h * 0.55f
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = size.width; val h = size.height; val cy = h * 0.5f
 
             // ── Crosshair position (CNC WCS concept) ──
             // Machine Zero (MZ) = first gyro reading → "power-on home"
@@ -481,9 +485,9 @@ fun ARWeldWorkspaceOverlay(modifier: Modifier, state: WeldVisionState, isPowerSa
                 val deltaX = (tipWorldX - state.calibrationRefX).coerceIn(-50f, 50f)
                 val deltaZ = (tipWorldZ - state.calibrationRefZ).coerceIn(-30f, 30f)
                 tx = (w / 2f + deltaX * 3f).coerceIn(w * 0.05f, w * 0.95f)
-                ty = (h * 0.55f + deltaZ * 3f).coerceIn(h * 0.05f, h * 0.95f)
-            } else if (state.hasMachineZero) {
-                // Machine Zero mode: delta from initial gyro position
+                ty = (h * 0.5f + deltaZ * 3f).coerceIn(h * 0.05f, h * 0.95f)
+            } else if (state.hasMachineZero && state.isPracticeRunActive) {
+                // Machine Zero mode: delta from initial gyro position (only during practice run)
                 val workDelta = state.gyroWorkAngle - state.machineZeroWorkAngle
                 val travelDelta = state.gyroTravelAngle - state.machineZeroTravelAngle
                 // MZ is the center reference — positive delta = moved from initial
@@ -492,8 +496,8 @@ fun ARWeldWorkspaceOverlay(modifier: Modifier, state: WeldVisionState, isPowerSa
                 tx = w * (0.1f + 0.8f * travelFrac)
                 ty = h * (0.1f + 0.8f * workFrac)
             } else {
-                // No gyro yet: centered
-                tx = w / 2f; ty = h * 0.55f
+                // Not active or no gyro: perfectly centered
+                tx = w / 2f; ty = h * 0.5f
             }
 
             var finalTx = tx
@@ -525,18 +529,44 @@ fun ARWeldWorkspaceOverlay(modifier: Modifier, state: WeldVisionState, isPowerSa
             }
         }
 
-        // ── HUD panels — hidden in minimal mode ──
-        if (!state.isMinimalHud) {
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        // ── HUD panels — hidden in minimal mode and during active weld ──
+        if (!state.isMinimalHud && !state.isPracticeRunActive) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 90.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ) {
                 Column(Modifier.background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(8.dp)).padding(8.dp)) {
                     Text("AR HUD: SEAM LOCK", color = Color(0xFF00FFF0), fontSize = 9.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
                     Text("JOINT: ${state.currentJoint.label}", color = Color.White.copy(alpha = 0.8f), fontSize = 8.sp, fontFamily = FontFamily.Monospace)
                     Text("CAMERA: 1080p @ ${if (isPowerSaveEnabled) "10" else "60"} FPS", color = Color.White.copy(alpha = 0.8f), fontSize = 8.sp, fontFamily = FontFamily.Monospace)
                 }
-                Column(Modifier.background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(8.dp)).padding(8.dp), horizontalAlignment = Alignment.End) {
-                    Text("THERMAL", color = Color(0xFFFF3B30), fontSize = 9.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-                    Text("PLATE: ${state.currentMaterial.label}", color = Color.White.copy(alpha = 0.8f), fontSize = 8.sp, fontFamily = FontFamily.Monospace)
-                    Text("MELT: ${state.currentMaterial.meltPoint}", color = Color.White.copy(alpha = 0.8f), fontSize = 8.sp, fontFamily = FontFamily.Monospace)
+                
+                Row(
+                    modifier = Modifier
+                        .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
+                        .clickable { isThermalExpanded = !isThermalExpanded }
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Thermostat,
+                        contentDescription = "Thermal Info",
+                        tint = Color(0xFFFF3B30),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    if (isThermalExpanded) {
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("THERMAL", color = Color(0xFFFF3B30), fontSize = 9.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                            Text("PLATE: ${state.currentMaterial.label}", color = Color.White.copy(alpha = 0.8f), fontSize = 8.sp, fontFamily = FontFamily.Monospace)
+                            Text("MELT: ${state.currentMaterial.meltPoint}", color = Color.White.copy(alpha = 0.8f), fontSize = 8.sp, fontFamily = FontFamily.Monospace)
+                        }
+                    }
                 }
             }
         }

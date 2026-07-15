@@ -229,6 +229,7 @@ fun SettingsScreen(
                         .weight(1f)
                         .fillMaxHeight()
                         .background(ContainerGrey, RoundedCornerShape(16.dp))
+                        .verticalScroll(rememberScrollState())
                         .padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -289,6 +290,7 @@ fun SettingsScreen(
                         .weight(1f)
                         .fillMaxHeight()
                         .background(ContainerGrey, RoundedCornerShape(16.dp))
+                        .verticalScroll(rememberScrollState())
                         .padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -351,6 +353,44 @@ fun SettingsScreen(
                                 modifier = Modifier.size(24.dp).background(BorderGrey, RoundedCornerShape(4.dp))
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                            }
+                        }
+                    }
+
+                    // Dial 3: Gas Flow Rate (Only for GMAW and GTAW)
+                    if (state.currentProcess != WeldProcess.SMAW) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(ContainerGrey, RoundedCornerShape(12.dp))
+                                .border(1.dp, BorderGrey, RoundedCornerShape(12.dp))
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text("Gas Flow Rate", color = MutedText, fontSize = 8.sp)
+                                Text(
+                                    text = "${String.format("%.1f", state.gasFlowRate)} CFH",
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                IconButton(
+                                    onClick = { viewModel.adjustGasFlowRate(-0.5f) },
+                                    modifier = Modifier.size(24.dp).background(BorderGrey, RoundedCornerShape(4.dp))
+                                ) {
+                                    Icon(Icons.Default.Remove, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                                }
+                                IconButton(
+                                    onClick = { viewModel.adjustGasFlowRate(0.5f) },
+                                    modifier = Modifier.size(24.dp).background(BorderGrey, RoundedCornerShape(4.dp))
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                                }
                             }
                         }
                     }

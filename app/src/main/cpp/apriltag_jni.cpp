@@ -513,3 +513,18 @@ Java_com_example_tracking_WeldVisionJNI_nativeGetLatestPose(
 }
 
 } // extern "C"
+
+extern "C" {
+    JNIEXPORT void JNICALL
+    Java_com_example_tracking_AprilTagTracker_initTracker(JNIEnv *env, jobject thiz) {
+        __android_log_print(ANDROID_LOG_INFO, "AprilTagJNI", "Tracker initialized");
+    }
+
+    JNIEXPORT jfloatArray JNICALL
+    Java_com_example_tracking_AprilTagTracker_processFrame(JNIEnv *env, jobject thiz,
+                                                           jint width, jint height,
+                                                           jbyteArray data) {
+        // Stub for processing frame
+        return nullptr;
+    }
+}

@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "weld_sessions")
 data class WeldSessionEntity(
     @PrimaryKey val id: String,
+    val userId: Int = 1,
     val timestamp: String,
     val process: String, // "GMAW", "GTAW", "SMAW"
     val material: String,
