@@ -139,8 +139,14 @@ fun CalibrationScreen(
             }
             
             // Middle instructions
+            val instructions = when (state.calibrationStep) {
+                0 -> if (state.isCalibrated) "Calibration complete. You can recalibrate if needed." else "Tap START CALIBRATION to begin the two-step sequence."
+                1 -> "Step 1: Focal Length.\nPosition torch at ${listOf("CLOSE (~150mm)", "MEDIUM (~250mm)", "FAR (~350mm)")[state.focalLengthStep]} indicator."
+                2 -> "Step 2: Tip Offset.\nTouch tip to a fixed point. Orientation: ${listOf("NEUTRAL", "TILT LEFT", "TILT RIGHT", "TILT FORWARD")[state.tipOffsetStep]}."
+                else -> "Calibration complete."
+            }
             Text(
-                text = "Center the AprilTag on the crosshair. Tap INITIATE SWEEP, then slowly tilt the phone in a cone arc.",
+                text = instructions,
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 11.sp,
                 lineHeight = 16.sp
@@ -161,7 +167,7 @@ fun CalibrationScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Tracking Convergence", color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp)
+                        Text(if (state.calibrationStep == 1) "Focal Length Progress" else "Tip Offset Convergence", color = Color.White.copy(alpha = 0.9f), fontSize = 10.sp)
                         Text(
                             text = "${state.calibrationProgress}%",
                             color = if (state.isCalibrated) AlertEmerald else WarningAmber,
@@ -196,8 +202,21 @@ fun CalibrationScreen(
                 }
 
                 // Action Buttons
+                val buttonText = when (state.calibrationStep) {
+                    0 -> if (state.isCalibrated) "RECALIBRATE" else "START CALIBRATION"
+                    1 -> if (state.isCalibrating) "CAPTURING..." else "CAPTURE ${listOf("CLOSE", "MEDIUM", "FAR")[state.focalLengthStep]}"
+                    2 -> if (state.isCalibrating) "CAPTURING..." else "CAPTURE ${listOf("NEUTRAL", "LEFT", "RIGHT", "FORWARD")[state.tipOffsetStep]}"
+                    else -> "RECALIBRATE"
+                }
+                
                 Button(
-                    onClick = { viewModel.runCalibration() },
+                    onClick = { 
+                        when (state.calibrationStep) {
+                            0, 3 -> viewModel.startCalibration()
+                            1 -> viewModel.captureFocalLength()
+                            2 -> viewModel.captureTipOffset()
+                        }
+                    },
                     enabled = !state.isCalibrating,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (state.isCalibrated) AccentCyan.copy(alpha = 0.7f) else AccentCyan,
@@ -212,7 +231,7 @@ fun CalibrationScreen(
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = null, tint = if (state.isCalibrating) MutedText else OnPrimary, modifier = Modifier.size(16.dp))
                         Text(
-                            if (state.isCalibrated) "RECALIBRATE" else "INITIATE SWEEP",
+                            buttonText,
                             color = if (state.isCalibrating) MutedText else OnPrimary,
                             fontWeight = FontWeight.Black,
                             fontSize = 11.sp

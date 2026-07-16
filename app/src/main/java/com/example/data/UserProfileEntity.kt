@@ -12,9 +12,7 @@ data class UserProfileEntity(
     val matricNo: String = "",
     val level: Int = 3,
     val experiencePoints: Int = 1250,
-    val gmawWeldTimeSeconds: Int = 240, // 4 mins initial GTAW/GMAW practice
-    val gtawWeldTimeSeconds: Int = 95,
-    val smawWeldTimeSeconds: Int = 180,
+    val gmawWeldTimeSeconds: Int = 240, // 4 mins initial GMAW practice
     val isSynced: Boolean = false,
     val lastUpdated: Long = System.currentTimeMillis()
 )

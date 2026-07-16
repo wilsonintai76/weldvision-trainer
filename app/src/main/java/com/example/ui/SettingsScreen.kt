@@ -203,7 +203,7 @@ fun SettingsScreen(
                         }
                         
                         item {
-                            Text("Environment & Joint", color = MutedText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("Joint, Env & Clamping", color = MutedText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(8.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Box(modifier = Modifier.weight(1f).border(1.dp, AccentCyan, RoundedCornerShape(8.dp)).clickable { 
@@ -217,6 +217,12 @@ fun SettingsScreen(
                                     viewModel.updateJoint(nextJoint)
                                 }.padding(8.dp), contentAlignment = Alignment.Center) {
                                     Text(state.currentJoint.label, color = WarningAmber, fontSize = 9.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                                }
+                                Box(modifier = Modifier.weight(1f).border(1.dp, AlertEmerald, RoundedCornerShape(8.dp)).clickable { 
+                                    val nextClamp = ClampingRestraint.values()[(state.clampingRestraint.ordinal + 1) % ClampingRestraint.values().size]
+                                    viewModel.updateClampingRestraint(nextClamp)
+                                }.padding(8.dp), contentAlignment = Alignment.Center) {
+                                    Text(state.clampingRestraint.label, color = AlertEmerald, fontSize = 9.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                                 }
                             }
                         }
@@ -296,6 +302,30 @@ fun SettingsScreen(
                 ) {
                     Text("Simulated Machine Parameters", color = MutedText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
 
+                    // Dial 0: Material & Thickness
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(ContainerGrey, RoundedCornerShape(12.dp))
+                            .border(1.dp, BorderGrey, RoundedCornerShape(12.dp))
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Material & Thickness", color = MutedText, fontSize = 8.sp)
+                            Text("${state.currentMaterial.label} (${state.materialThickness}mm)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            IconButton(onClick = { viewModel.updateMaterialThickness((state.materialThickness - 0.5f).coerceAtLeast(1.0f)) }, modifier = Modifier.size(24.dp).background(BorderGrey, RoundedCornerShape(4.dp))) {
+                                Icon(Icons.Default.Remove, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                            }
+                            IconButton(onClick = { viewModel.updateMaterialThickness((state.materialThickness + 0.5f).coerceAtMost(25.0f)) }, modifier = Modifier.size(24.dp).background(BorderGrey, RoundedCornerShape(4.dp))) {
+                                Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                            }
+                        }
+                    }
+
                     // Dial 1: Voltage
                     Row(
                         modifier = Modifier
@@ -357,40 +387,38 @@ fun SettingsScreen(
                         }
                     }
 
-                    // Dial 3: Gas Flow Rate (Only for GMAW and GTAW)
-                    if (state.currentProcess != WeldProcess.SMAW) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(ContainerGrey, RoundedCornerShape(12.dp))
-                                .border(1.dp, BorderGrey, RoundedCornerShape(12.dp))
-                                .padding(8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text("Gas Flow Rate", color = MutedText, fontSize = 8.sp)
-                                Text(
-                                    text = "${String.format("%.1f", state.gasFlowRate)} CFH",
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
-                                )
+                    // Dial 3: Gas Flow Rate
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(ContainerGrey, RoundedCornerShape(12.dp))
+                            .border(1.dp, BorderGrey, RoundedCornerShape(12.dp))
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Gas Flow Rate", color = MutedText, fontSize = 8.sp)
+                            Text(
+                                text = "${String.format("%.1f", state.gasFlowRate)} CFH",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            IconButton(
+                                onClick = { viewModel.adjustGasFlowRate(-0.5f) },
+                                modifier = Modifier.size(24.dp).background(BorderGrey, RoundedCornerShape(4.dp))
+                            ) {
+                                Icon(Icons.Default.Remove, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
                             }
-                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                IconButton(
-                                    onClick = { viewModel.adjustGasFlowRate(-0.5f) },
-                                    modifier = Modifier.size(24.dp).background(BorderGrey, RoundedCornerShape(4.dp))
-                                ) {
-                                    Icon(Icons.Default.Remove, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                                }
-                                IconButton(
-                                    onClick = { viewModel.adjustGasFlowRate(0.5f) },
-                                    modifier = Modifier.size(24.dp).background(BorderGrey, RoundedCornerShape(4.dp))
-                                ) {
-                                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                                }
+                            IconButton(
+                                onClick = { viewModel.adjustGasFlowRate(0.5f) },
+                                modifier = Modifier.size(24.dp).background(BorderGrey, RoundedCornerShape(4.dp))
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
                             }
                         }
                     }

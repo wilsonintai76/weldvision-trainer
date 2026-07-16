@@ -8,25 +8,24 @@ import com.example.data.SyncLogEntity
 // ============================================================================
 
 enum class AppScreen {
-    LOGIN, REGISTER, CALIBRATE, SIMULATOR, SETTINGS, RESULTS, PROFILE
+    LOGIN, REGISTER, CALIBRATE, SIMULATOR, SETTINGS, RESULTS, PROFILE, QR_SCANNER
 }
 
 enum class WeldProcess(val label: String, val abbrev: String) {
-    GMAW("MIG / Gas Metal Arc", "GMAW"),
-    GTAW("TIG / Gas Tungsten Arc", "GTAW"),
-    SMAW("Stick / Shielded Metal Arc", "SMAW")
+    GMAW("MIG / Gas Metal Arc", "GMAW")
 }
 
 enum class MaterialType(val label: String, val thermalCond: String, val meltPoint: String) {
-    STEEL("Carbon Steel", "Low", "1420°C"),
-    ALUMINUM("Aluminum", "High", "660°C"),
-    TITANIUM("Titanium", "Low", "1668°C")
+    CARBON_STEEL("Carbon Steel (A36)", "Low", "1420°C")
 }
 
 enum class JointConfig(val label: String) {
-    BUTT("Butt Joint (1G)"),
-    LAP("Lap Joint (2F)"),
-    TEE("Tee Joint (2F)")
+    BUTT("Butt Joint (1G)")
+}
+
+enum class ClampingRestraint(val label: String) {
+    NONE("None"),
+    MEDIUM("Medium (Soft Clamps)")
 }
 
 enum class EnvironmentFactor(val label: String) {
@@ -65,6 +64,8 @@ data class WeldingModule(
     val process: WeldProcess,
     val joint: JointConfig,
     val material: MaterialType,
+    val materialThickness: Float,
+    val clampingRestraint: ClampingRestraint,
     val targetGap: Float,
     val targetSpeed: Float,
     val voltage: Float,
@@ -78,38 +79,10 @@ data class WeldingModule(
 val preDefinedModules = listOf(
     WeldingModule(
         id = "mig_butt", title = "MIG Butt Joint (1G)",
-        process = WeldProcess.GMAW, joint = JointConfig.BUTT, material = MaterialType.STEEL,
+        process = WeldProcess.GMAW, joint = JointConfig.BUTT, material = MaterialType.CARBON_STEEL, materialThickness = 6.0f, clampingRestraint = ClampingRestraint.MEDIUM,
         targetGap = 3.0f, targetSpeed = 4.5f, voltage = 19.5f, amperage = 135, wireFeedSpeed = 230, gasFlowRate = 25.0f,
         description = "Beginner focus. Weld a flat-position butt joint with MIG. Keep arc gap around 3.0mm and travel at 4.5mm/s.",
         levelRequired = 1
-    ),
-    WeldingModule(
-        id = "tig_corner", title = "TIG Corner Joint (2F)",
-        process = WeldProcess.GTAW, joint = JointConfig.TEE, material = MaterialType.ALUMINUM,
-        targetGap = 2.0f, targetSpeed = 2.5f, voltage = 13.0f, amperage = 95, wireFeedSpeed = 0, gasFlowRate = 18.0f,
-        description = "Precision focus. Weld a vertical corner fillet joint on Aluminum. Requires a tight 2.0mm gap and steady pace.",
-        levelRequired = 2
-    ),
-    WeldingModule(
-        id = "stick_lap", title = "Stick Lap Joint (2F)",
-        process = WeldProcess.SMAW, joint = JointConfig.LAP, material = MaterialType.STEEL,
-        targetGap = 3.8f, targetSpeed = 3.2f, voltage = 24.0f, amperage = 110, wireFeedSpeed = 0, gasFlowRate = 0.0f,
-        description = "Horizontal lap joint training. Maintain a consistent 3.8mm arc gap as stick electrode is consumed.",
-        levelRequired = 1
-    ),
-    WeldingModule(
-        id = "mig_tee", title = "MIG Tee Fillet (2F)",
-        process = WeldProcess.GMAW, joint = JointConfig.TEE, material = MaterialType.STEEL,
-        targetGap = 3.2f, targetSpeed = 5.0f, voltage = 21.0f, amperage = 155, wireFeedSpeed = 260, gasFlowRate = 28.0f,
-        description = "High wire-feed speed fillet weld. Practice keeping a stable work angle and trailing gun drag angle.",
-        levelRequired = 3
-    ),
-    WeldingModule(
-        id = "tig_butt_titanium", title = "TIG Butt Joint (1G) - Titanium",
-        process = WeldProcess.GTAW, joint = JointConfig.BUTT, material = MaterialType.TITANIUM,
-        targetGap = 1.5f, targetSpeed = 1.8f, voltage = 11.5f, amperage = 80, wireFeedSpeed = 0, gasFlowRate = 15.0f,
-        description = "Advanced precision. Thin bead profile on Titanium with a low 1.5mm gap constraint.",
-        levelRequired = 4
     )
 )
 
@@ -120,8 +93,10 @@ val preDefinedModules = listOf(
 data class WeldVisionState(
     val currentScreen: AppScreen = AppScreen.LOGIN,
     val selectedModuleId: String = "mig_butt",
-    val currentMaterial: MaterialType = MaterialType.STEEL,
-    val currentJoint: JointConfig = JointConfig.LAP,
+    val currentMaterial: MaterialType = MaterialType.CARBON_STEEL,
+    val materialThickness: Float = 6.0f,
+    val currentJoint: JointConfig = JointConfig.BUTT,
+    val clampingRestraint: ClampingRestraint = ClampingRestraint.MEDIUM,
     val currentEnvironment: EnvironmentFactor = EnvironmentFactor.NORMAL,
     val isInstructorJoined: Boolean = false,
     val isInstructorAudioActive: Boolean = false,
@@ -146,6 +121,9 @@ data class WeldVisionState(
     val isCalibrating: Boolean = false,
     val calibrationProgress: Int = 0,
     val isCalibrated: Boolean = false,
+    val calibrationStep: Int = 0, // 0: Idle/Done, 1: Focal Length, 2: Tip Offset
+    val focalLengthStep: Int = 0, // 0: Close, 1: Medium, 2: Far
+    val tipOffsetStep: Int = 0, // 0: Neutral, 1: Left, 2: Right, 3: Forward
     val calibrationOffsetX: Float = 0f,
     val calibrationOffsetY: Float = 0f,
     val calibrationOffsetZ: Float = 0f,
@@ -179,14 +157,11 @@ data class WeldVisionState(
     val lastAngleOrientationStability: Int = 92,
     val lastCoachingPhrase: String = "Excellent control of your arc length which remained stable at a clean 3.1mm average. However, your travel speed was erratic and spiked near the end of the plate. Focus on maintaining a steady physical drag speed, ensuring your arm slides smoothly without wrist adjustments.",
     val sessionHistory: List<WeldSession> = listOf(
-        WeldSession("session_1", "Jul 12, 2026 14:32", "GMAW", "Carbon Steel", "Butt Joint (1G)", 76, 82, 65, 80, 1, "Medium", "Moderate arc stability. Speed spiked near the weld finish, causing minor undercut defects."),
-        WeldSession("session_2", "Jul 13, 2026 09:15", "SMAW", "Carbon Steel", "Tee Joint (2F)", 84, 89, 78, 86, 0, "Low", "Good overall consistency. Solid control of travel angle; try to smooth out wrist transitions.")
+        WeldSession("session_1", "Jul 12, 2026 14:32", "GMAW", "Carbon Steel", "Butt Joint (1G)", 76, 82, 65, 80, 1, "Medium", "Moderate arc stability. Speed spiked near the weld finish, causing minor undercut defects.")
     ),
     val profileName: String = "Weld Apprentice",
     val matricNo: String = "",
     val gmawWeldTime: Int = 240,
-    val gtawWeldTime: Int = 95,
-    val smawWeldTime: Int = 180,
     val isEditingName: Boolean = false,
     val editedName: String = "",
     val editedMatricNo: String = "",

@@ -587,8 +587,7 @@ fun SimulatorScreen(state: WeldVisionState, viewModel: WeldVisionUiViewModel) {
                     
                     val defCount = if (finalAvgGrade < 70) 2 else if (finalAvgGrade < 84) 1 else 0
                     val isWindy = state.currentEnvironment == EnvironmentFactor.WINDY
-                    val usesGas = state.currentProcess != WeldProcess.SMAW
-                    val badGasFlow = usesGas && (state.gasFlowRate < 15f || state.gasFlowRate > 35f)
+                    val badGasFlow = state.gasFlowRate < 15f || state.gasFlowRate > 35f
                     
                     val porosity = when {
                         isWindy -> "High (Gas Shield Blown)"

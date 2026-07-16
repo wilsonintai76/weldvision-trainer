@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.data.*
 import com.example.tracking.BeadPhysics
 import com.example.tracking.HybridWeldTracker
+import com.example.tracking.MqttTelemetryPublisher
 import com.example.tracking.WeaveAnalyzer
 import com.example.tracking.WexelGrid
 import com.example.tracking.WeldVisionJNI
@@ -22,12 +23,23 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
     val state: StateFlow<WeldVisionState> = _state.asStateFlow()
     val weaveAnalyzer = WeaveAnalyzer()
     val hybridTracker = HybridWeldTracker()
+    private val telemetryPublisher = MqttTelemetryPublisher()
     val beadGrid = WexelGrid()
     val beadPhysics = BeadPhysics(beadGrid)
     private val pivotCalibrator = PivotCalibrator()
     private var calibrationPoseCount = 0
+    private suspend fun validateAuthToken(token: String): Boolean {
+        delay(300)
+        return token.startsWith("ey") && token.length > 20
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        telemetryPublisher.disconnect()
+    }
 
     init {
+        telemetryPublisher.connect()
         _state.update { state ->
             state.copy(
                 serverUrl = syncManager.serverUrl,
@@ -59,8 +71,7 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
                         repository.getUserProfile(userId).collect { profile ->
                             if (profile != null) _state.update { it.copy(
                                 profileName = profile.name, matricNo = profile.matricNo, userLevel = profile.level, experiencePoints = profile.experiencePoints,
-                                gmawWeldTime = profile.gmawWeldTimeSeconds, gtawWeldTime = profile.gtawWeldTimeSeconds,
-                                smawWeldTime = profile.smawWeldTimeSeconds) }
+                                gmawWeldTime = profile.gmawWeldTimeSeconds) }
                         }
                     }
                     launch {
@@ -116,37 +127,68 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
     fun setOnboardingOverlayVisible(visible: Boolean) { _state.update { it.copy(showOnboardingOverlay = visible) } }
 
     // ── Calibration ──
-    fun runCalibration() {
+    fun startCalibration() {
         if (_state.value.isCalibrating) return
         pivotCalibrator.reset()
         calibrationPoseCount = 0
-        _state.update { it.copy(isCalibrating = true, calibrationProgress = 0) }
+        _state.update { it.copy(
+            isCalibrating = false, // Not capturing right this second
+            calibrationStep = 1,
+            focalLengthStep = 0,
+            tipOffsetStep = 0,
+            calibrationProgress = 0,
+            isCalibrated = false
+        ) }
+    }
+
+    fun captureFocalLength() {
+        if (_state.value.isCalibrating) return
+        val nextStep = _state.value.focalLengthStep + 1
+        if (nextStep > 2) {
+            _state.update { it.copy(
+                calibrationStep = 2,
+                focalLengthStep = 2,
+                calibrationProgress = 33
+            ) }
+        } else {
+            _state.update { it.copy(
+                focalLengthStep = nextStep,
+                calibrationProgress = (nextStep * 11)
+            ) }
+        }
+    }
+
+    fun captureTipOffset() {
+        if (_state.value.isCalibrating) return
+        _state.update { it.copy(isCalibrating = true) }
+        val curStep = _state.value.tipOffsetStep
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
-            try {
-                for (i in 1..100) {
-                    delay(60)
-                    // Snapshot the latest full pose from native tracker
-                    try {
-                        val pose = FloatArray(16)
-                        if (WeldVisionJNI.nativeGetLatestPose(pose) == 1) {
-                            val (R, t) = WeldVisionJNI.decomposeHomogeneous(pose)
-                            pivotCalibrator.addSample(R, t)
-                            calibrationPoseCount++
-                        }
-                    } catch (t: Throwable) {
-                        android.util.Log.e("WeldVisionVM", "Calibration pose sample failed", t)
+            for (i in 1..20) {
+                delay(50)
+                try {
+                    val pose = FloatArray(16)
+                    if (WeldVisionJNI.nativeGetLatestPose(pose) == 1) {
+                        val (R, t) = WeldVisionJNI.decomposeHomogeneous(pose)
+                        pivotCalibrator.addSample(R, t)
+                        calibrationPoseCount++
                     }
-                    _state.update { it.copy(calibrationProgress = i, isCalibrating = i < 100) }
+                } catch (t: Throwable) {
+                    android.util.Log.e("WeldVisionVM", "Calibration pose sample failed", t)
                 }
-                // Solve for bracket offset
+            }
+            
+            val nextStep = curStep + 1
+            if (nextStep > 3) {
                 val offset = pivotCalibrator.computeCalibrationOffset()
                 if (offset != null && calibrationPoseCount >= pivotCalibrator.minSamples) {
-                    // Compute WCS reference: tip world position right now
                     val cur = _state.value
                     val refTipX = cur.tagTxMm + offset[0]
                     val refTipZ = cur.tagTzMm + offset[2]
                     _state.update { it.copy(
-                        isCalibrating = false, calibrationProgress = 100,
+                        isCalibrating = false,
+                        calibrationStep = 3,
+                        tipOffsetStep = 4,
+                        calibrationProgress = 100,
                         isCalibrated = true,
                         calibrationOffsetX = offset[0],
                         calibrationOffsetY = offset[1],
@@ -154,7 +196,6 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
                         calibrationRefX = refTipX,
                         calibrationRefZ = refTipZ
                     )}
-                    // Persist to Room DB (including WCS reference)
                     repository.saveCalibration(CalibrationEntity(
                         offsetX = offset[0], offsetY = offset[1], offsetZ = offset[2],
                         refX = refTipX, refZ = refTipZ,
@@ -162,11 +203,14 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
                         calibratedAt = System.currentTimeMillis()
                     ))
                 } else {
-                    // Not enough poses — mark as failed
-                    _state.update { it.copy(isCalibrating = false, calibrationProgress = 0, isCalibrated = false) }
+                    _state.update { it.copy(isCalibrating = false, calibrationStep = 0, calibrationProgress = 0, isCalibrated = false) }
                 }
-            } catch (_: Throwable) {
-                _state.update { it.copy(isCalibrating = false, calibrationProgress = 0, isCalibrated = false) }
+            } else {
+                _state.update { it.copy(
+                    isCalibrating = false,
+                    tipOffsetStep = nextStep,
+                    calibrationProgress = 33 + (nextStep * 16)
+                ) }
             }
         }
     }
@@ -174,7 +218,17 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
     fun resetCalibration() {
         pivotCalibrator.reset()
         calibrationPoseCount = 0
-        _state.update { it.copy(isCalibrated = false, calibrationOffsetX = 0f, calibrationOffsetY = 0f, calibrationOffsetZ = 0f, calibrationProgress = 0) }
+        _state.update { it.copy(
+            isCalibrated = false,
+            isCalibrating = false,
+            calibrationStep = 0,
+            focalLengthStep = 0,
+            tipOffsetStep = 0,
+            calibrationOffsetX = 0f,
+            calibrationOffsetY = 0f,
+            calibrationOffsetZ = 0f,
+            calibrationProgress = 0
+        ) }
         viewModelScope.launch { repository.saveCalibration(CalibrationEntity()) }
     }
 
@@ -241,6 +295,10 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
         val ts = hybridTracker.update(
             tagTranslationMm, null // TODO: Wire up actual camera rotation Quaternion from JNI
         )
+        
+        // Push 60Hz coordinate stream to broker
+        telemetryPublisher.publishTelemetry(ts)
+
         _state.update { it.copy(
             travelProgress = ts.travelProgress,
             travelDistanceMm = ts.travelDistanceMm,
@@ -292,13 +350,15 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
     fun selectTrainingModule(moduleId: String) {
         val m = preDefinedModules.firstOrNull { it.id == moduleId } ?: return
         _state.update { it.copy(selectedModuleId = moduleId, currentProcess = m.process, currentJoint = m.joint,
-            currentMaterial = m.material, targetGap = m.targetGap, targetSpeed = m.targetSpeed,
+            currentMaterial = m.material, materialThickness = m.materialThickness, clampingRestraint = m.clampingRestraint, targetGap = m.targetGap, targetSpeed = m.targetSpeed,
             voltage = m.voltage, amperage = m.amperage, wireFeedSpeed = m.wireFeedSpeed, gasFlowRate = m.gasFlowRate,
             isPracticeRunActive = false, weldProgress = 0f, scoreTicks = 0, scoreSum = 0) }
     }
     fun updateProcess(process: WeldProcess) { _state.update { it.copy(currentProcess = process) } }
     fun updateMaterial(material: MaterialType) { _state.update { it.copy(currentMaterial = material) } }
+    fun updateMaterialThickness(thickness: Float) { _state.update { it.copy(materialThickness = thickness) } }
     fun updateJoint(joint: JointConfig) { _state.update { it.copy(currentJoint = joint) } }
+    fun updateClampingRestraint(restraint: ClampingRestraint) { _state.update { it.copy(clampingRestraint = restraint) } }
     fun updateEnvironment(env: EnvironmentFactor) { _state.update { it.copy(currentEnvironment = env) } }
     fun toggleInstructor() { _state.update { it.copy(isInstructorJoined = !it.isInstructorJoined, isInstructorAudioActive = !it.isInstructorJoined) } }
     fun addInstructorAnnotation(offset: androidx.compose.ui.geometry.Offset) { _state.update { it.copy(instructorAnnotations = it.instructorAnnotations + offset) } }
@@ -358,10 +418,10 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
                 porosityRisk = porosityRisk, coachingPhrase = coachingPhrase, weldTimeSeconds = 12)
             repository.insertWeldSession(sessionEntity)
             val profile = repository.getProfileDirect(cur.currentUserId ?: 1) ?: UserProfileEntity()
-            var gmaw = profile.gmawWeldTimeSeconds; var gtaw = profile.gtawWeldTimeSeconds; var smaw = profile.smawWeldTimeSeconds
-            when (cur.currentProcess) { WeldProcess.GMAW -> gmaw += 12; WeldProcess.GTAW -> gtaw += 12; WeldProcess.SMAW -> smaw += 12 }
+            var gmaw = profile.gmawWeldTimeSeconds
+            gmaw += 12
             repository.saveUserProfile(profile.copy(level = if (profile.experiencePoints + 150 >= 2000) 4 else profile.level,
-                experiencePoints = profile.experiencePoints + 150, gmawWeldTimeSeconds = gmaw, gtawWeldTimeSeconds = gtaw, smawWeldTimeSeconds = smaw))
+                experiencePoints = profile.experiencePoints + 150, gmawWeldTimeSeconds = gmaw))
             if (syncManager.isAutoSyncEnabled) performCloudSync()
             // Achievements
             val prevPerfect = prev.any { it.grade >= 90 }; val prevNoDef = prev.any { it.defectCount == 0 }
@@ -437,6 +497,65 @@ class WeldVisionUiViewModel(application: Application) : AndroidViewModel(applica
                 }
             } catch (e: Exception) {
                 onError("Error: ${e.message}")
+            }
+        }
+    }
+
+    fun processQr(uriString: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val uri = android.net.Uri.parse(uriString)
+                if (uri.scheme != "weldvision") {
+                    onError("Invalid QR Code: Not a WeldVision QR")
+                    return@launch
+                }
+                when (uri.host) {
+                    "session-init" -> {
+                        val sid = uri.getQueryParameter("sid") ?: ""
+                        val bid = uri.getQueryParameter("bid") ?: ""
+                        if (sid.isEmpty()) {
+                            onError("Invalid activation QR")
+                            return@launch
+                        }
+                        
+                        // If student doesn't exist, create a stub profile
+                        var user = repository.getUserByEmail("$sid@weldvision.local")
+                        if (user == null) {
+                            val newUser = UserProfileEntity(
+                                name = sid.replace("stu_", "").replace("_", " ").uppercase(),
+                                email = "$sid@weldvision.local",
+                                matricNo = sid,
+                                passwordHash = "" // No password needed for QR flow
+                            )
+                            repository.saveUserProfile(newUser)
+                            user = repository.getUserByEmail("$sid@weldvision.local")
+                        }
+                        
+                        if (user != null) {
+                            _state.update { it.copy(currentUserId = user.id, currentScreen = AppScreen.SIMULATOR) }
+                            onSuccess()
+                        } else {
+                            onError("Failed to register student profile")
+                        }
+                    }
+                    "desktop-login" -> {
+                        val token = uri.getQueryParameter("token") ?: ""
+                        if (token.isEmpty()) {
+                            onError("Invalid desktop login QR")
+                            return@launch
+                        }
+                        
+                        val approved = syncManager.approveDesktopLogin(token)
+                        if (approved) {
+                            onSuccess() // Let the UI show a success toast
+                        } else {
+                            onError("Desktop login rejected by server")
+                        }
+                    }
+                    else -> onError("Unknown QR action: ${uri.host}")
+                }
+            } catch (e: Exception) {
+                onError("Failed to process QR: ${e.message}")
             }
         }
     }

@@ -13,8 +13,6 @@ data class UserProfileDto(
     @Json(name = "level") val level: Int,
     @Json(name = "experiencePoints") val experiencePoints: Int,
     @Json(name = "gmawWeldTimeSeconds") val gmawWeldTimeSeconds: Int,
-    @Json(name = "gtawWeldTimeSeconds") val gtawWeldTimeSeconds: Int,
-    @Json(name = "smawWeldTimeSeconds") val smawWeldTimeSeconds: Int,
     @Json(name = "lastUpdated") val lastUpdated: Long
 )
 

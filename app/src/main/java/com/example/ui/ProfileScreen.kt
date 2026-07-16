@@ -283,7 +283,7 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                val totalSeconds = state.gmawWeldTime + state.gtawWeldTime + state.smawWeldTime
+                val totalSeconds = state.gmawWeldTime
                 val formattedTotalTime = remember(totalSeconds) {
                     val h = totalSeconds / 3600
                     val m = (totalSeconds % 3600) / 60
@@ -392,9 +392,7 @@ fun ProfileScreen(
 
             if (activeProfileTab == 0) {
                 val processes = listOf(
-                    WeldProcessDetail("GMAW", "MIG / Gas Metal Arc", state.gmawWeldTime, AlertEmerald),
-                    WeldProcessDetail("GTAW", "TIG / Gas Tungsten Arc", state.gtawWeldTime, AccentCyan),
-                    WeldProcessDetail("SMAW", "Stick / Shielded Metal Arc", state.smawWeldTime, WarningAmber)
+                    WeldProcessDetail("GMAW", "MIG / Gas Metal Arc", state.gmawWeldTime, AlertEmerald)
                 )
 
                 Column(
@@ -421,15 +419,13 @@ fun ProfileScreen(
 
 @Composable
 fun AchievementsTabContent(state: WeldVisionState) {
-    val totalSeconds = state.gmawWeldTime + state.gtawWeldTime + state.smawWeldTime
+    val totalSeconds = state.gmawWeldTime
     val sessionHistory = state.sessionHistory
 
     val maxGrade = if (sessionHistory.isEmpty()) 0 else sessionHistory.maxOf { it.grade }
     val maxArcStability = if (sessionHistory.isEmpty()) 0 else sessionHistory.maxOf { it.arcLengthStability }
     val maxSpeedUniformity = if (sessionHistory.isEmpty()) 0 else sessionHistory.maxOf { it.travelSpeedUniformity }
     val hasGmaw = sessionHistory.any { it.process == "GMAW" }
-    val hasGtaw = sessionHistory.any { it.process == "GTAW" }
-    val hasSmaw = sessionHistory.any { it.process == "SMAW" }
 
     val achievements = listOf(
         AchievementItem(
@@ -456,14 +452,7 @@ fun AchievementsTabContent(state: WeldVisionState) {
             statText = if (sessionHistory.any { it.defectCount == 0 }) "Status: Flawless" else "Status: No defect-free run yet",
             badgeColor = AccentCyan
         ),
-        AchievementItem(
-            title = "PROCESS MULTI-SPECIALIST",
-            description = "Complete at least one practice run with MIG (GMAW), TIG (GTAW), and Stick (SMAW).",
-            isUnlocked = hasGmaw && hasGtaw && hasSmaw,
-            icon = Icons.Default.Build,
-            statText = "Completed: ${(if (hasGmaw) 1 else 0) + (if (hasGtaw) 1 else 0) + (if (hasSmaw) 1 else 0)}/3 Processes",
-            badgeColor = Color(0xFFE57373)
-        ),
+
         AchievementItem(
             title = "ARC LENGTH MASTER",
             description = "Achieve 90% or higher Arc Length Stability on a practice run.",

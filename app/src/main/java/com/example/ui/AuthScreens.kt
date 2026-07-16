@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,8 +30,6 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit
 ) {
     val context = LocalContext.current
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
 
@@ -45,106 +44,41 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text("WELDVISION", color = Color.Cyan, fontSize = 36.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-        Text("T R A I N E R", color = Color.Gray, fontSize = 14.sp, letterSpacing = 8.sp)
+        Text("S T U D I O", color = Color.Gray, fontSize = 14.sp, letterSpacing = 8.sp)
         
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(64.dp))
 
         if (errorMessage != null) {
             Text(errorMessage!!, color = Color.Red, fontSize = 14.sp)
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it; errorMessage = null },
-            label = { Text("Email", color = Color.Gray) },
-            leadingIcon = { Icon(Icons.Default.Email, "Email", tint = Color.Gray) },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.Cyan,
-                unfocusedBorderColor = Color.DarkGray,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it; errorMessage = null },
-            label = { Text("Password", color = Color.Gray) },
-            visualTransformation = PasswordVisualTransformation(),
-            leadingIcon = { Icon(Icons.Default.Lock, "Password", tint = Color.Gray) },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.Cyan,
-                unfocusedBorderColor = Color.DarkGray,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
+        // Primary QR Scan Button
         Button(
-            onClick = {
-                if (email.isBlank() || password.isBlank()) {
-                    errorMessage = "Please enter email and password"
-                    return@Button
-                }
-                isLoading = true
-                viewModel.loginUser(
-                    email = email.trim(),
-                    passwordHash = password, // Ideally hash this!
-                    onSuccess = { isLoading = false },
-                    onError = { err -> isLoading = false; errorMessage = err }
-                )
-            },
+            onClick = { viewModel.navigateTo(AppScreen.QR_SCANNER) },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, contentColor = Color.Black),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.fillMaxWidth().height(50.dp)
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth().height(64.dp)
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(24.dp))
-            } else {
-                Text("LOGIN", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            }
+            Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR", modifier = Modifier.size(28.dp).padding(end = 8.dp))
+            Text("SCAN QR TO LOGIN", fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Scan the QR code on your workstation monitor or on your training bracket.",
+            color = Color.Gray,
+            fontSize = 12.sp,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
 
-        if (BiometricHelper.isBiometricAvailable(context)) {
-            Button(
-                onClick = {
-                    activity?.let {
-                        BiometricHelper.promptBiometricAuth(
-                            activity = it,
-                            onSuccess = {
-                                viewModel.loginBiometric(
-                                    onSuccess = {},
-                                    onError = { err -> Toast.makeText(context, err, Toast.LENGTH_SHORT).show() }
-                                )
-                            },
-                            onError = { err -> Toast.makeText(context, err, Toast.LENGTH_SHORT).show() }
-                        )
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray, contentColor = Color.White),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().height(50.dp)
-            ) {
-                Icon(Icons.Default.Fingerprint, "Biometric", modifier = Modifier.padding(end = 8.dp))
-                Text("LOGIN WITH BIOMETRIC / FACE", fontSize = 14.sp)
-            }
-        }
+        Spacer(modifier = Modifier.height(48.dp))
 
-        Spacer(modifier = Modifier.height(32.dp))
-
+        // Optional Instructor Fallback Link
         Row {
-            Text("Don't have an account? ", color = Color.Gray)
+            Text("Instructor access? ", color = Color.Gray)
             Text(
-                "Register",
+                "Manual Login",
                 color = Color.Cyan,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable { onNavigateToRegister() }

@@ -269,6 +269,49 @@ fun WeldVisionLandscapeApp(
                             LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
                             ProfileScreen(state, viewModel)
                         }
+                        AppScreen.QR_SCANNER -> {
+                            LockScreenOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            
+                            val activity = LocalContext.current.findActivity() as? androidx.fragment.app.FragmentActivity
+                            val appCtx = LocalContext.current.applicationContext
+
+                            QrScannerScreen(
+                                onQrScanned = { uri ->
+                                    if (activity != null && BiometricHelper.isBiometricAvailable(activity)) {
+                                        BiometricHelper.promptBiometricAuth(
+                                            activity = activity,
+                                            onSuccess = {
+                                                viewModel.processQr(
+                                                    uriString = uri,
+                                                    onSuccess = {
+                                                        // Let the viewModel handle navigation internally or trigger a toast
+                                                    },
+                                                    onError = { err ->
+                                                        android.widget.Toast.makeText(appCtx, err, android.widget.Toast.LENGTH_SHORT).show()
+                                                        viewModel.navigateTo(AppScreen.LOGIN)
+                                                    }
+                                                )
+                                            },
+                                            onError = { err ->
+                                                android.widget.Toast.makeText(appCtx, err, android.widget.Toast.LENGTH_SHORT).show()
+                                                viewModel.navigateTo(AppScreen.LOGIN)
+                                            }
+                                        )
+                                    } else {
+                                        // Fallback if no biometric available, just process it directly
+                                        viewModel.processQr(
+                                            uriString = uri,
+                                            onSuccess = {},
+                                            onError = { err ->
+                                                android.widget.Toast.makeText(appCtx, err, android.widget.Toast.LENGTH_SHORT).show()
+                                                viewModel.navigateTo(AppScreen.LOGIN)
+                                            }
+                                        )
+                                    }
+                                },
+                                onClose = { viewModel.navigateTo(AppScreen.LOGIN) }
+                            )
+                        }
                     }
                 }
 

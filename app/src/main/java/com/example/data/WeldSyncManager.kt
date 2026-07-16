@@ -93,8 +93,6 @@ class WeldSyncManager(
                 level = localProfile.level,
                 experiencePoints = localProfile.experiencePoints,
                 gmawWeldTimeSeconds = localProfile.gmawWeldTimeSeconds,
-                gtawWeldTimeSeconds = localProfile.gtawWeldTimeSeconds,
-                smawWeldTimeSeconds = localProfile.smawWeldTimeSeconds,
                 lastUpdated = localProfile.lastUpdated
             )
 
@@ -141,8 +139,6 @@ class WeldSyncManager(
                         level = updatedProfile.level,
                         experiencePoints = updatedProfile.experiencePoints,
                         gmawWeldTimeSeconds = updatedProfile.gmawWeldTimeSeconds,
-                        gtawWeldTimeSeconds = updatedProfile.gtawWeldTimeSeconds,
-                        smawWeldTimeSeconds = updatedProfile.smawWeldTimeSeconds,
                         isSynced = true,
                         lastUpdated = updatedProfile.lastUpdated
                     )
@@ -256,8 +252,6 @@ class WeldSyncManager(
                         level = remoteProfile.level,
                         experiencePoints = remoteProfile.experiencePoints,
                         gmawWeldTimeSeconds = remoteProfile.gmawWeldTimeSeconds,
-                        gtawWeldTimeSeconds = remoteProfile.gtawWeldTimeSeconds,
-                        smawWeldTimeSeconds = remoteProfile.smawWeldTimeSeconds,
                         isSynced = true,
                         lastUpdated = remoteProfile.lastUpdated
                     )
@@ -346,12 +340,13 @@ class WeldSyncManager(
         // 2. Simulate virtual remote updates from other devices (multi-device accessibility)
         // If the user's last sync was never, simulate fetching historical logs from another device "WELD-PORTABLE-99"
         if (lastSyncTimestamp == 0L) {
+            // Simulated cloud GMAW session
             cloudSessions.add(
                 WeldSessionDto(
                     id = "session_cloud_device_2",
                     userId = localProfile.id,
                     timestamp = "Jul 13, 2026 15:10",
-                    process = "GTAW",
+                    process = "GMAW",
                     material = "Stainless Steel",
                     joint = "Butt Joint (1G)",
                     grade = 93,
@@ -360,31 +355,12 @@ class WeldSyncManager(
                     angleOrientationStability = 94,
                     defectCount = 0,
                     porosityRisk = "Low",
-                    coachingPhrase = "Remote synchronization retrieved: Masterclass performance in high-conductivity GTAW bead layers.",
+                    coachingPhrase = "Remote synchronization retrieved: Masterclass performance in GMAW.",
                     weldTimeSeconds = 18,
                     lastUpdated = System.currentTimeMillis() - 86400000L // 1 day ago
                 )
             )
-            cloudSessions.add(
-                WeldSessionDto(
-                    id = "session_cloud_device_3",
-                    userId = localProfile.id,
-                    timestamp = "Jul 14, 2026 01:25",
-                    process = "SMAW",
-                    material = "Carbon Steel",
-                    joint = "Tee Joint (2F)",
-                    grade = 82,
-                    arcLengthStability = 80,
-                    travelSpeedUniformity = 85,
-                    angleOrientationStability = 81,
-                    defectCount = 0,
-                    porosityRisk = "Low",
-                    coachingPhrase = "Remote synchronization retrieved: Good root penetration. Arc gap remained consistent.",
-                    weldTimeSeconds = 15,
-                    lastUpdated = System.currentTimeMillis() - 3600000L // 1 hour ago
-                )
-            )
-            remoteWeldCountAdded = 2
+            remoteWeldCountAdded = 1
         }
 
         // 3. Reconcile Sessions (Last Write Wins conflict resolution)
@@ -412,9 +388,7 @@ class WeldSyncManager(
             matricNo = localProfile.matricNo,
             level = maxOf(localProfile.level, 3),
             experiencePoints = maxOf(localProfile.experiencePoints, 1250),
-            gmawWeldTimeSeconds = maxOf(localProfile.gmawWeldTimeSeconds, 240),
-            gtawWeldTimeSeconds = maxOf(localProfile.gtawWeldTimeSeconds, 95) + (if (lastSyncTimestamp == 0L) 18 else 0),
-            smawWeldTimeSeconds = maxOf(localProfile.smawWeldTimeSeconds, 180) + (if (lastSyncTimestamp == 0L) 15 else 0),
+            gmawWeldTimeSeconds = maxOf(localProfile.gmawWeldTimeSeconds, 240) + (if (lastSyncTimestamp == 0L) 18 else 0),
             lastUpdated = System.currentTimeMillis() - 3600000L
         )
 
@@ -427,5 +401,13 @@ class WeldSyncManager(
 
         val details = "Pushed ${localSessions.count { !it.id.startsWith("session_initial") }} local sessions. Pulled $remoteWeldCountAdded remote sessions. $profileMerged"
         return Triple(finalProfile, finalSessionsMap.values.toList(), details)
+    }
+
+    suspend fun approveDesktopLogin(token: String): Boolean = withContext(Dispatchers.IO) {
+        // Stub for hitting the Cloudflare Worker API to approve desktop login session
+        // e.g. POST to https://api.weldvision-cloud.io/v1/desktop/approve
+        // For now, simulate network and return true
+        kotlinx.coroutines.delay(800)
+        return@withContext true
     }
 }

@@ -63,7 +63,7 @@ class WeldRepository(private val weldDao: WeldDao) {
     suspend fun initializeDatabaseIfEmpty() {
         val lastUser = weldDao.getLastActiveUser()
         if (lastUser == null) {
-            // Populate default historic weld sessions for GMAW, GTAW, SMAW to show rich trends!
+            // Populate default historic weld sessions for GMAW
             val initialSessions = listOf(
                 WeldSessionEntity(
                     id = "session_initial_1",
@@ -79,38 +79,6 @@ class WeldRepository(private val weldDao: WeldDao) {
                     defectCount = 1,
                     porosityRisk = "Medium",
                     coachingPhrase = "Moderate arc stability. However, speed fluctuated near middle of weld.",
-                    weldTimeSeconds = 12
-                ),
-                WeldSessionEntity(
-                    id = "session_initial_2",
-                    userId = 1,
-                    timestamp = "Jul 11, 2026 09:15",
-                    process = "GTAW",
-                    material = "Aluminum",
-                    joint = "Tee Joint (2F)",
-                    grade = 81,
-                    arcLengthStability = 85,
-                    travelSpeedUniformity = 78,
-                    angleOrientationStability = 82,
-                    defectCount = 0,
-                    porosityRisk = "Low",
-                    coachingPhrase = "Nice and clean bead with stable travel speed. Minor angle variation noted.",
-                    weldTimeSeconds = 12
-                ),
-                WeldSessionEntity(
-                    id = "session_initial_3",
-                    userId = 1,
-                    timestamp = "Jul 10, 2026 16:45",
-                    process = "SMAW",
-                    material = "Carbon Steel",
-                    joint = "Lap Joint (2F)",
-                    grade = 69,
-                    arcLengthStability = 70,
-                    travelSpeedUniformity = 62,
-                    angleOrientationStability = 75,
-                    defectCount = 2,
-                    porosityRisk = "High",
-                    coachingPhrase = "Weld was deposited with excessive arc length. Tighten your stick gap.",
                     weldTimeSeconds = 12
                 ),
                 WeldSessionEntity(
