@@ -1,0 +1,22 @@
+{
+  "name": "WeldVision Trainer — Classroom Command Center",
+  "short_name": "WeldVision CC",
+  "description": "Multi-user welding simulator classroom dashboard with real-time 3D telemetry",
+  "start_url": "./classroom-command-center.html",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "orientation": "landscape-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

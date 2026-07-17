@@ -4,50 +4,59 @@
 
 # WeldVision Trainer 2.0
 
-WeldVision Trainer 2.0 is a **Hybrid Edge-Cloud Welding Simulation Platform**. It fuses on-device computer vision and sensor telemetry to deliver real-time, zero-latency feedback ($< 16.6\text{ ms}$) to welding trainees, while seamlessly backing up high-frequency motion data for comprehensive 3D instructor replays in the browser.
-
-## Features
-
-- **On-Device AR Tracking:** Android application utilizing CameraX, AprilTags, and Gyroscope sensor fusion to compute 6-DOF (Degrees of Freedom) torch position and orientation.
-- **Rigid Fixture Architecture:** AprilTags are permanently mounted on a fixed, rigid fixture frame, eliminating consumable tag waste and simplifying setup. The system automatically computes positional offsets for the inserted steel coupons.
-- **Cloudflare Edge Ingestion:** Telemetry is asynchronously streamed to Cloudflare D1 (SQL Summary) and R2 (Raw time-series gzip).
-- **Web Replay Dashboard:** A self-contained Three.js (WebGL) portal that parses the raw telemetry streams directly from Cloudflare R2 and reconstructs the student's 3D weld trajectory for granular grading and NDT overlay inspection.
+WeldVision Trainer 2.0 is a **Hybrid Edge-Cloud Welding Simulation Platform** with multi-user classroom MQTT telemetry, C++ SVD calibration solvers, and AI-powered defect detection.
 
 ## Repository Structure
 
+| Directory | Role | Tech |
+|-----------|------|------|
+| [`android-app/`](android-app/) | Student mobile tracker | Kotlin, C++ (AprilTag, SVD geometry), Room DB |
+| [`webvision-studio/`](webvision-studio/) | Instructor dashboard PWA | React 19, Three.js, Tailwind CSS, Hono Worker |
+| [`telemetry-server/`](telemetry-server/) | Live MQTT bridge | Node.js, Aedes broker |
+| [`core-assets/`](core-assets/) | Shared 3D models & prints | glTF 2.0, SVG |
+
+## Architecture
+
 ```
-weldvision-trainer/
-├── app/                          # Android Trainer App (Trainee)
-│   └── src/main/java/com/example/
-│       ├── MainActivity.kt       # Jetpack Compose UI Entry
-│       └── tracking/             # 6-DOF AprilTag + Gyro Sensor Fusion Engine
-├── web-dashboard/                # Instructor Web Portal
-│   ├── telemetry-stream.ts       # R2 gzip stream parser & WebGL helper
-│   └── replay-viewer.html        # Interactive Three.js 3D replay demo
-├── ARCHITECTURE.md               # Detailed system topology and mathematics
-└── ...                           # Gradle build configuration files
+Android Phones ──► MQTT (TCP :1883) ──► telemetry-server/ ──► WebSocket (:9001) ──► webvision-studio/
+                                             │
+                                             ▼
+                                     Cloudflare Worker
+                                     (D1 + R2 + KV + Workers AI)
 ```
 
-## Running the Android App
+## Quick Start
 
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
+### 1. Telemetry Bridge (instructor laptop)
 
-1. Open Android Studio.
-2. Select **Open** and choose the `weldvision-trainer` directory.
-3. Allow Android Studio to sync the Gradle build.
-4. Create a `.env` file in the root project directory and set your `CLOUDFLARE_API_TOKEN`:
-   ```env
-   CLOUDFLARE_API_TOKEN=your_api_token_here
-   ```
-   *(See `.env.example` for reference)*
-5. Connect an Android device (or emulator) and click **Run**.
+```bash
+cd telemetry-server
+npm install && npm run dev
+```
 
-## Running the Web Dashboard
+### 2. WebVision Studio (instructor browser)
 
-The web dashboard is a browser-native vanilla JS application requiring zero build steps.
+```bash
+cd webvision-studio
+npm install && npm run dev
+# → http://localhost:5173
+```
 
-1. Simply open `web-dashboard/replay-viewer.html` in any modern web browser.
-2. By default, it will fall back to a generated mock telemetry stream for offline development if the R2 bucket cannot be reached.
+### 3. Android App (student phones)
 
----
-*For a deep dive into the coordinate systems, spatial boundary math, and Cloudflare database schemas, please refer to [ARCHITECTURE.md](./ARCHITECTURE.md).*
+```bash
+cd android-app
+./gradlew assembleDebug
+```
+
+## Key Features
+
+- **60 Hz C++ Solver** — On-device AprilTag tracking + SVD-based TCP calibration with condition number gating
+- **Multi-User Classroom MQTT** — Dynamic topic routing `weldvision/student/{seat}/live` with wildcard subscription
+- **Focused Viewport Pattern** — Single WebGL context renders selected student's weld in high-fidelity 3D
+- **AI Defect Detection** — Cloudflare Workers AI (Llama 3.3 70B) analyzes telemetry for porosity, undercut, and spatter
+- **PWA Offline Support** — Service worker with cache-first strategy for classroom reliability
+
+## License
+
+Proprietary — WeldVision Trainer 2.0

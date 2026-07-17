@@ -1,0 +1,52 @@
+# ============================================================================
+# WeldVision Trainer 2.0 — Cloudflare Wrangler Configuration
+# ============================================================================
+# Deploys the Hono Worker API alongside the React PWA frontend.
+#
+#   npm run worker:dev    → local dev on :8787
+#   npm run worker:deploy → production deploy
+#   npm run db:init       → initialize D1 schema
+# ============================================================================
+
+name = "weldvision-dashboard"
+main = "src/workers/index.ts"
+
+# ── Compatibility ────────────────────────────────────────────────────────────
+compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ── Static Assets (React PWA) ────────────────────────────────────────────────
+[site]
+bucket = "./dist"
+
+# ── D1 Database — Session metadata, user profiles, scores ────────────────────
+[[d1_databases]]
+binding = "DB"
+database_name = "weldvision-db"
+database_id = "weldvision-db-prod"
+
+# ── R2 Bucket — 60 Hz telemetry coordinate streams ───────────────────────────
+[[r2_buckets]]
+binding = "TELEMETRY"
+bucket_name = "weldvision-telemetry"
+
+# ── KV Namespace — Real-time classroom roster cache ──────────────────────────
+[[kv_namespaces]]
+binding = "ROSTER"
+id = "weldvision-roster"
+
+# ── Workers AI — Defect detection inference ──────────────────────────────────
+[ai]
+binding = "AI"
+
+# ── Environment-specific overrides ───────────────────────────────────────────
+[env.production]
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "weldvision-db"
+database_id = "weldvision-db-prod"
+
+# ── Observability ────────────────────────────────────────────────────────────
+[observability]
+enabled = true
+head_sampling_rate = 0.1

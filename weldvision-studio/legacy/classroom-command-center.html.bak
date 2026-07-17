@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d1117" />
+  <meta name="description" content="WeldVision Trainer — Multi-User Classroom Command Center" />
+  <link rel="manifest" href="manifest.json" />
+  <title>WeldVision Trainer 2.0 — Classroom Command Center</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Roster Sidebar (Left) ─────────────────────── */
+    #roster-sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: #161b22;
+      border-right: 1px solid #30363d;
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+    }
+    #roster-header {
+      padding: 16px;
+      border-bottom: 1px solid #30363d;
+    }
+    #roster-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #58a6ff;
+      margin-bottom: 4px;
+    }
+    #roster-header .subtitle {
+      font-size: 12px;
+      color: #8b949e;
+    }
+    #roster-header .broker-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 11px;
+    }
+    #roster-header .broker-status .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #484f58;
+    }
+    #roster-header .broker-status .dot.online { background: #3fb950; }
+    #roster-header .broker-status .dot.offline { background: #da3633; }
+    #roster-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .student-card {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .student-card:hover { border-color: #58a6ff; }
+    .student-card.selected {
+      border-color: #58a6ff;
+      background: #1c2a3e;
+    }
+    .student-card .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .student-card .seat-label {
+      font-size: 11px;
+      color: #8b949e;
+      text-transform: uppercase;
+    }
+    .student-card .student-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .student-card .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .student-card .status-dot.welding { background: #3fb950; box-shadow: 0 0 6px #3fb950; }
+    .student-card .status-dot.idle { background: #d29922; }
+    .student-card .status-dot.offline { background: #484f58; }
+    .student-card .kpi-row {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: #8b949e; margin-top: 4px;
+    }
+    .student-card .score {
+      font-weight: 600;
+      font-size: 18px;
+    }
+    .student-card .score.good { color: #3fb950; }
+    .student-card .score.warn { color: #d29922; }
+    .student-card .score.bad { color: #da3633; }
+    #roster-footer {
+      padding: 12px 16px;
+      border-top: 1px solid #30363d;
+      font-size: 12px;
+      color: #8b949e;
+      display: flex; justify-content: space-between;
+    }
+    #roster-footer .broker-input {
+      display: flex; gap: 4px; margin-top: 6px;
+    }
+    #roster-footer input {
+      flex: 1;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 4px 8px;
+      color: #c9d1d9;
+      font-size: 11px;
+    }
+    #roster-footer button {
+      background: #238636;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    #roster-footer button:hover { background: #2ea043; }
+
+    /* ── Main Viewport (Right) ─────────────────────── */
+    #viewport {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    #canvas-container {
+      flex: 1;
+      position: relative;
+    }
+    #viewport-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid #30363d;
+      background: #161b22;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #viewport-header h3 { font-size: 15px; color: #58a6ff; }
+    #viewport-header .student-info { font-size: 13px; color: #8b949e; }
+
+    /* ── HUD Overlay ───────────────────────────────── */
+    #hud {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: rgba(22, 27, 34, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 10px 20px;
+      z-index: 10;
+    }
+    #hud button {
+      background: #238636; color: #fff;
+      border: 1px solid #2ea043; border-radius: 8px;
+      padding: 6px 14px; font-size: 13px; cursor: pointer;
+    }
+    #hud button:hover { background: #2ea043; }
+    #hud button:disabled { background: #21262d; color: #484f58; border-color: #30363d; cursor: not-allowed; }
+    #hud select {
+      background: #0d1117; color: #c9d1d9;
+      border: 1px solid #30363d; border-radius: 6px;
+      padding: 6px 10px; font-size: 13px;
+    }
+
+    /* ── Info Panel ────────────────────────────────── */
+    #info-panel {
+      position: absolute; top: 12px; right: 12px;
+      background: rgba(22, 27, 34, 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid #30363d; border-radius: 12px;
+      padding: 14px 18px; font-size: 12px;
+      line-height: 1.6; z-index: 10; min-width: 190px;
+    }
+    #info-panel span { color: #58a6ff; font-weight: 600; }
+    .outlier-badge {
+      position: absolute; top: 12px; left: 12px;
+      background: rgba(218, 54, 51, 0.85); border-radius: 8px;
+      padding: 6px 12px; font-size: 12px; font-weight: 600;
+      display: none; z-index: 10;
+    }
+    .outlier-badge.visible { display: block; }
+
+    /* ── Empty State ───────────────────────────────── */
+    #empty-state {
+      position: absolute; inset: 0; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      color: #484f58; font-size: 15px; gap: 8px;
+    }
+    #empty-state.hidden { display: none; }
+
+    /* ── Responsive ────────────────────────────────── */
+    @media (max-width: 768px) {
+      #roster-sidebar { width: 220px; min-width: 220px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- ROSTER SIDEBAR                                       -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="roster-sidebar">
+  <div id="roster-header">
+    <h2>⚡ WeldVision Command</h2>
+    <div class="subtitle">Classroom Roster</div>
+    <div class="broker-status">
+      <span class="dot offline" id="broker-dot"></span>
+      <span id="broker-label">Disconnected</span>
+      <span style="margin-left:auto" id="active-count">0 active</span>
+    </div>
+  </div>
+  <div id="roster-list">
+    <div style="text-align:center;color:#484f58;padding:32px 16px;font-size:13px">
+      Waiting for students...<br>
+      <small>Connect phones to <code id="broker-ip-display">localhost</code></small>
+    </div>
+  </div>
+  <div id="roster-footer">
+    <div>
+      <div>Broker Address</div>
+      <div class="broker-input">
+        <input type="text" id="broker-ip-input" value="localhost" placeholder="192.168.1.x" />
+        <button id="btn-reconnect">Connect</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- MAIN 3D VIEWPORT                                     -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="viewport">
+  <div id="viewport-header">
+    <h3 id="viewport-title">Select a student to begin</h3>
+    <div class="student-info" id="viewport-student-info"></div>
+  </div>
+  <div id="canvas-container">
+    <div id="empty-state">
+      <span style="font-size:32px">🔍</span>
+      <span>Click a student in the roster to inspect their weld</span>
+    </div>
+    <div class="outlier-badge" id="outlier-badge">⚠ Outlier</div>
+    <div id="info-panel">
+      <div>Frame: <span id="frame-num">—</span></div>
+      <div>Travel θ: <span id="travel-angle">—</span></div>
+      <div>Work φ: <span id="work-angle">—</span></div>
+      <div>Speed: <span id="tip-speed">—</span></div>
+      <div>Tip: <span id="tip-pos">—</span></div>
+    </div>
+    <div id="hud">
+      <button id="btn-play" title="Play" disabled>▶</button>
+      <button id="btn-pause" title="Pause" disabled>⏸</button>
+      <button id="btn-reset" title="Reset" disabled>⏮</button>
+      <select id="speed-select" title="Playback Speed">
+        <option value="0.25">0.25×</option>
+        <option value="0.5">0.5×</option>
+        <option value="1" selected>1×</option>
+        <option value="2">2×</option>
+        <option value="4">4×</option>
+      </select>
+      <span id="progress-label">0%</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCRIPTS                                              -->
+<!-- ═══════════════════════════════════════════════════ -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { isFrameOutlier, toThreeVector } from "./telemetry-stream.ts";
+import { ClassroomMqttClient } from "./mqtt-client.ts";
+
+// ── Register Service Worker ──────────────────────────
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+// ═══════════════════════════════════════════════════════
+// MQTT CLIENT SETUP
+// ═══════════════════════════════════════════════════════
+
+const mqttClient = new ClassroomMqttClient("localhost", 9001);
+
+// DOM refs
+const rosterListEl = document.getElementById("roster-list");
+const brokerDot = document.getElementById("broker-dot");
+const brokerLabel = document.getElementById("broker-label");
+const activeCountEl = document.getElementById("active-count");
+const brokerIpInput = document.getElementById("broker-ip-input");
+const brokerIpDisplay = document.getElementById("broker-ip-display");
+const btnReconnect = document.getElementById("btn-reconnect");
+const emptyState = document.getElementById("empty-state");
+
+let selectedSeat = null;
+
+// ── Connection Management ────────────────────────────
+
+function connectBroker() {
+  const host = brokerIpInput.value.trim() || "localhost";
+  mqttClient.brokerHost = host;
+  brokerIpDisplay.textContent = host;
+  mqttClient.disconnect();
+  mqttClient.connect();
+}
+
+btnReconnect.addEventListener("click", connectBroker);
+
+mqttClient.onConnectionChange = (connected, error) => {
+  if (connected) {
+    brokerDot.className = "dot online";
+    brokerLabel.textContent = `Connected to ${mqttClient.brokerHost}`;
+  } else {
+    brokerDot.className = "dot offline";
+    brokerLabel.textContent = error || "Disconnected";
+  }
+};
+
+// ── Frame Handler ────────────────────────────────────
+
+mqttClient.onFrame = (topic, frame) => {
+  const seat = frame.meta.seat;
+  activeCountEl.textContent = `${mqttClient.getActiveCount()} active`;
+  renderRoster();
+
+  // If this is the selected student, push to renderer
+  if (seat === selectedSeat) {
+    rendererPushFrame(frame);
+  }
+};
+
+mqttClient.onStatus = (topic, status) => {
+  renderRoster();
+};
+
+mqttClient.onRosterChange = (roster) => {
+  activeCountEl.textContent = `${mqttClient.getActiveCount()} active`;
+  renderRoster();
+};
+
+// ═══════════════════════════════════════════════════════
+// ROSTER RENDERING
+// ═══════════════════════════════════════════════════════
+
+function renderRoster() {
+  const list = mqttClient.getRosterList();
+
+  if (list.length === 0) {
+    rosterListEl.innerHTML = `<div style="text-align:center;color:#484f58;padding:32px 16px;font-size:13px">
+      Waiting for students...<br>
+      <small>Connect phones to <code>${mqttClient.brokerHost}</code></small>
+    </div>`;
+    return;
+  }
+
+  rosterListEl.innerHTML = list.map((entry) => {
+    const isSelected = entry.seat === selectedSeat;
+    const statusClass = entry.isWelding ? "welding" : "idle";
+    const scoreClass = entry.score >= 85 ? "good" : entry.score >= 60 ? "warn" : "bad";
+    const frame = entry.latestFrame;
+
+    return `
+      <div class="student-card ${isSelected ? "selected" : ""}" data-seat="${entry.seat}">
+        <div class="card-header">
+          <div>
+            <div class="seat-label">${entry.seat}</div>
+            <div class="student-name">${entry.name}</div>
+          </div>
+          <div class="status-dot ${statusClass}" title="${entry.isWelding ? "Welding" : "Idle"}"></div>
+        </div>
+        ${frame ? `
+        <div class="kpi-row">
+          <span>Speed</span><span>${frame.travel?.speed?.toFixed(1) ?? "—"} mm/s</span>
+        </div>
+        <div class="kpi-row">
+          <span>Progress</span><span>${((frame.travel?.progress ?? 0) * 100).toFixed(0)}%</span>
+        </div>
+        ` : ""}
+        <div class="kpi-row" style="margin-top:6px">
+          <span>Score</span>
+          <span class="score ${scoreClass}">${entry.score}%</span>
+        </div>
+        ${entry.defect ? `<div style="font-size:10px;color:#da3633;margin-top:2px">⚠ ${entry.defect}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  // Attach click handlers
+  rosterListEl.querySelectorAll(".student-card").forEach((card) => {
+    card.addEventListener("click", () => selectStudent(card.dataset.seat));
+  });
+}
+
+function selectStudent(seat) {
+  selectedSeat = seat;
+  const entry = mqttClient.roster[seat];
+  if (!entry) return;
+
+  document.getElementById("viewport-title").textContent =
+    `${entry.name} (${entry.seat})`;
+  document.getElementById("viewport-student-info").textContent =
+    entry.isWelding ? "🟢 Welding" : "🟡 Idle";
+
+  emptyState.classList.add("hidden");
+  document.getElementById("btn-play").disabled = false;
+  document.getElementById("btn-reset").disabled = false;
+
+  // Load student's frame history into the renderer
+  rendererLoadHistory(entry.frameHistory);
+  renderRoster();
+}
+
+// ═══════════════════════════════════════════════════════
+// THREE.JS 3D RENDERER
+// ═══════════════════════════════════════════════════════
+
+const container = document.getElementById("canvas-container");
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1117);
+scene.fog = new THREE.Fog(0x0d1117, 800, 2000);
+
+const camera = new THREE.PerspectiveCamera(50, 1, 10, 3000);
+camera.position.set(300, 200, 400);
+camera.lookAt(0, 0, 100);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+container.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0, 100);
+controls.enableDamping = true;
+controls.update();
+
+// Lighting
+scene.add(new THREE.AmbientLight(0x404060, 1.5));
+const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+dirLight.position.set(200, 400, 300);
+dirLight.castShadow = true;
+scene.add(dirLight);
+
+// T-Joint fixture
+function createPlate(w, h, d, color, pos) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.4 });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(pos.x, pos.y, pos.z);
+  mesh.receiveShadow = true;
+  mesh.castShadow = true;
+  return mesh;
+}
+scene.add(createPlate(300, 4, 200, 0x4a5568, { x: 0, y: -2, z: 100 }));
+scene.add(createPlate(4, 100, 200, 0x5a6578, { x: 0, y: 48, z: 100 }));
+const grid = new THREE.GridHelper(400, 20, 0x30363d, 0x21262d);
+grid.position.set(0, -4, 100);
+scene.add(grid);
+
+// Axes
+[ [150,0,0,0xff4444], [0,150,0,0x44ff44], [0,0,150,0x4488ff] ].forEach(([x,y,z,c]) => {
+  const line = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(x,y,z)]),
+    new THREE.LineBasicMaterial({ color: c })
+  );
+  scene.add(line);
+});
+
+// Ribbon
+const ribbonGeo = new THREE.BufferGeometry();
+const ribbonLine = new THREE.Line(ribbonGeo,
+  new THREE.LineBasicMaterial({ color: 0x58a6ff, linewidth: 1 }));
+scene.add(ribbonLine);
+
+// Torch indicator
+const torchSphere = new THREE.Mesh(
+  new THREE.SphereGeometry(4, 16, 16),
+  new THREE.MeshStandardMaterial({ color: 0xff7b00, emissive: 0xff4400, emissiveIntensity: 0.6 })
+);
+torchSphere.visible = false;
+scene.add(torchSphere);
+
+// ── Renderer State ───────────────────────────────────
+
+let renderFrames = [];
+let currentFrameIndex = 0;
+let isPlaying = false;
+let playbackSpeed = 1.0;
+let lastFrameTime = 0;
+const FRAME_INTERVAL_MS = 1000 / 60;
+
+const btnPlay = document.getElementById("btn-play");
+const btnPause = document.getElementById("btn-pause");
+const btnReset = document.getElementById("btn-reset");
+const speedSelect = document.getElementById("speed-select");
+const outlierBadge = document.getElementById("outlier-badge");
+
+function rendererLoadHistory(history) {
+  renderFrames = history.map((f) => ({
+    t: (f.timestamp - (history[0]?.timestamp ?? 0)) / 1000,
+    x: f.spatial.x,
+    y: f.spatial.y,
+    z: f.spatial.z,
+    travel_angle: f.angles.travel,
+    work_angle: f.angles.work,
+  }));
+  currentFrameIndex = 0;
+  ribbonGeo.setFromPoints([]);
+  torchSphere.visible = false;
+  updateRibbonTo(0);
+}
+
+function rendererPushFrame(frame) {
+  const t0 = renderFrames.length > 0 ? renderFrames[0].t * 1000 : frame.timestamp;
+  renderFrames.push({
+    t: (frame.timestamp - t0) / 1000,
+    x: frame.spatial.x,
+    y: frame.spatial.y,
+    z: frame.spatial.z,
+    travel_angle: frame.angles.travel,
+    work_angle: frame.angles.work,
+  });
+
+  // Auto-advance if playing and at end
+  if (isPlaying && currentFrameIndex >= renderFrames.length - 2) {
+    currentFrameIndex = renderFrames.length - 1;
+    updateRibbonTo(currentFrameIndex);
+    updateHUD(renderFrames[currentFrameIndex]);
+  }
+}
+
+function updateRibbonTo(idx) {
+  const pts = renderFrames.slice(0, idx + 1).map((f) => {
+    const v = toThreeVector(f, true);
+    return new THREE.Vector3(v.x, v.y, v.z);
+  });
+  ribbonGeo.setFromPoints(pts);
+  if (pts.length > 0) {
+    torchSphere.position.copy(pts[pts.length - 1]);
+    torchSphere.visible = true;
+  }
+  document.getElementById("progress-label").textContent =
+    renderFrames.length > 0 ? `${((idx / renderFrames.length) * 100).toFixed(0)}%` : "0%";
+}
+
+function updateHUD(frame) {
+  document.getElementById("frame-num").textContent = currentFrameIndex;
+  document.getElementById("travel-angle").textContent = frame.travel_angle.toFixed(1) + "°";
+  document.getElementById("work-angle").textContent = frame.work_angle.toFixed(1) + "°";
+  document.getElementById("tip-speed").textContent = "—";
+  document.getElementById("tip-pos").textContent =
+    `(${frame.x.toFixed(1)}, ${frame.y.toFixed(1)}, ${frame.z.toFixed(1)}) mm`;
+
+  if (isFrameOutlier(frame)) {
+    outlierBadge.classList.add("visible");
+    setTimeout(() => outlierBadge.classList.remove("visible"), 1200);
+  }
+}
+
+function resetReplay() {
+  currentFrameIndex = 0;
+  isPlaying = false;
+  btnPlay.textContent = "▶";
+  btnPause.disabled = true;
+  ribbonGeo.setFromPoints([]);
+  torchSphere.visible = false;
+  document.getElementById("progress-label").textContent = "0%";
+}
+
+// ── Resize ───────────────────────────────────────────
+
+function resize() {
+  const rect = container.getBoundingClientRect();
+  camera.aspect = rect.width / Math.max(rect.height, 1);
+  camera.updateProjectionMatrix();
+  renderer.setSize(rect.width, rect.height);
+}
+window.addEventListener("resize", resize);
+
+// ── Controls ─────────────────────────────────────────
+
+btnPlay.addEventListener("click", () => {
+  if (currentFrameIndex >= renderFrames.length - 1) {
+    currentFrameIndex = 0;
+    ribbonGeo.setFromPoints([]);
+  }
+  isPlaying = true;
+  lastFrameTime = performance.now();
+  btnPlay.textContent = "▶";
+  btnPause.disabled = false;
+});
+
+btnPause.addEventListener("click", () => {
+  isPlaying = false;
+  btnPlay.textContent = "▶";
+  btnPause.disabled = true;
+});
+
+btnReset.addEventListener("click", resetReplay);
+
+speedSelect.addEventListener("change", () => {
+  playbackSpeed = parseFloat(speedSelect.value);
+});
+
+window.addEventListener("keydown", (e) => {
+  switch (e.key) {
+    case " ": e.preventDefault(); isPlaying ? btnPause.click() : btnPlay.click(); break;
+    case "r": btnReset.click(); break;
+  }
+});
+
+// ── Animation Loop ───────────────────────────────────
+
+function animate(timestamp) {
+  requestAnimationFrame(animate);
+
+  if (isPlaying && renderFrames.length > 0) {
+    const elapsed = timestamp - lastFrameTime;
+    const interval = FRAME_INTERVAL_MS / playbackSpeed;
+
+    if (elapsed >= interval) {
+      lastFrameTime = timestamp - (elapsed % interval);
+      currentFrameIndex++;
+
+      if (currentFrameIndex >= renderFrames.length) {
+        currentFrameIndex = renderFrames.length - 1;
+        isPlaying = false;
+        btnPlay.textContent = "⟳";
+        btnPause.disabled = true;
+      }
+
+      updateRibbonTo(currentFrameIndex);
+      updateHUD(renderFrames[currentFrameIndex]);
+    }
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+// ── Bootstrap ────────────────────────────────────────
+
+resize();
+requestAnimationFrame(animate);
+connectBroker();
+
+console.log("🏭 WeldVision Classroom Command Center ready");
+console.log(`   MQTT wildcard: weldvision/student/+/live`);
+console.log(`   Waiting for student devices on ${brokerIpInput.value || "localhost"}:1883`);
+</script>
+</body>
+</html>

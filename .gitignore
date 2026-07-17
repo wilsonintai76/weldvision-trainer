@@ -1,18 +1,29 @@
-*.iml
-.gradle
-.kotlin
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+# Android
+android-app/.gradle/
+android-app/build/
+android-app/app/build/
+android-app/local.properties
+*.apk
+*.aab
+
+# Web Studio
+weldvision-studio/node_modules/
+weldvision-studio/dist/
+weldvision-studio/.env
+
+# Server
+telemetry-server/node_modules/
+telemetry-server/dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-.env
-debug.keystore
+Thumbs.db
+
+# Calibration (per-student files should not be committed)
+android-app/app/src/main/assets/calibration_profiles/

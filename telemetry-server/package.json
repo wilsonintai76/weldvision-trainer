@@ -1,0 +1,23 @@
+{
+  "name": "weldvision-telemetry-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "WeldVision Trainer — Live Telemetry Bridge Server. Relays 60 Hz MQTT streams from student Android phones to the WebVision Studio instructor dashboard via WebSocket.",
+  "scripts": {
+    "dev": "tsx watch server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "aedes": "^0.51.0",
+    "ws": "^8.18.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.7.0"
+  }
+}

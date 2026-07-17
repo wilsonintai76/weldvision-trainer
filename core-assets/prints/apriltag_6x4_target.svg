@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="210mm" height="297mm">
+  <title>AprilTag 6×4 Calibration Target</title>
+  <rect width="210" height="297" fill="white"/>
+  <!-- Center crosshair -->
+  <line x1="105" y1="138.5" x2="105" y2="158.5" stroke="black" stroke-width="0.5"/>
+  <line x1="95" y1="148.5" x2="115" y2="148.5" stroke="black" stroke-width="0.5"/>
+  <!-- Tag grid placeholder — 6 columns × 4 rows -->
+  <g transform="translate(25, 88.5)">
+    <!-- Row 0 -->
+    <rect x="0"   y="0"  width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="26"  y="0"  width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="52"  y="0"  width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="78"  y="0"  width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="104" y="0"  width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="130" y="0"  width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <!-- Row 1 -->
+    <rect x="0"   y="26" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="26"  y="26" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="52"  y="26" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="78"  y="26" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="104" y="26" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="130" y="26" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <!-- Row 2 -->
+    <rect x="0"   y="52" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="26"  y="52" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="52"  y="52" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="78"  y="52" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="104" y="52" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="130" y="52" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <!-- Row 3 -->
+    <rect x="0"   y="78" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="26"  y="78" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="52"  y="78" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="78"  y="78" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="104" y="78" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="130" y="78" width="25" height="25" fill="none" stroke="black" stroke-width="0.3"/>
+  </g>
+  <!-- Label -->
+  <text x="105" y="280" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#666">
+    WeldVision Trainer — AprilTag 6×4 Calibration Target (Print at 100% Scale)
+  </text>
+</svg>

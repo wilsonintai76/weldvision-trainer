@@ -1,0 +1,33 @@
+{
+  "buildFiles": [
+    "D:\\weldvision-trainer\\app\\src\\main\\cpp\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-C",
+      "D:\\weldvision-trainer\\app\\.cxx\\Debug\\5h3d6q1o\\x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "-C",
+    "D:\\weldvision-trainer\\app\\.cxx\\Debug\\5h3d6q1o\\x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "weldvision_jni::@6890427a1f51a3e7e1df": {
+      "artifactName": "weldvision_jni",
+      "abi": "x86_64",
+      "output": "D:\\weldvision-trainer\\app\\build\\intermediates\\cxx\\Debug\\5h3d6q1o\\obj\\x86_64\\libweldvision_jni.so",
+      "runtimeFiles": []
+    },
+    "apriltag_core::@6890427a1f51a3e7e1df": {
+      "artifactName": "apriltag_core",
+      "abi": "x86_64",
+      "output": "D:\\weldvision-trainer\\app\\.cxx\\Debug\\5h3d6q1o\\x86_64\\libapriltag_core.a",
+      "runtimeFiles": []
+    }
+  }
+}

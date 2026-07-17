@@ -1,0 +1,333 @@
+/**
+ * WeldVision Trainer 2.0 — Browser MQTT-over-WebSocket Client
+ * ============================================================
+ *
+ * Connects to the instructor's local Mosquitto broker via WebSocket
+ * (port 9001) and subscribes to the classroom wildcard topic:
+ *
+ *   weldvision/student/+/live
+ *
+ * The `+` single-level wildcard captures ALL student seat streams
+ * simultaneously. Each incoming frame carries embedded metadata
+ * (name, seat, studentId) so the dashboard can route it to the
+ * correct roster card.
+ *
+ * Dependencies: mqtt.js v5.x loaded via CDN import map
+ *
+ * Usage:
+ *   import { ClassroomMqttClient } from "./mqtt-client.ts";
+ *   const client = new ClassroomMqttClient("192.168.1.100");
+ *   client.onFrame = (topic, frame) => updateRoster(topic, frame);
+ *   client.connect();
+ */
+
+// ───────────────────────────────────────────────────────
+// Type Definitions
+// ───────────────────────────────────────────────────────
+
+/** Metadata embedded in every telemetry frame by the Android publisher. */
+export interface StudentMeta {
+  name: string;
+  seat: string;
+  studentId: string;
+}
+
+/** Spatial position of the torch tip in world frame (mm). */
+export interface SpatialData {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/** Torch orientation angles (degrees). */
+export interface AngleData {
+  work: number;
+  travel: number;
+}
+
+/** Travel metrics along the weld seam. */
+export interface TravelData {
+  speed: number;
+  progress: number;
+  distanceMm: number;
+}
+
+/** A single 60 Hz telemetry frame published by one student device. */
+export interface StudentTelemetryFrame {
+  meta: StudentMeta;
+  spatial: SpatialData;
+  angles: AngleData;
+  travel: TravelData;
+  timestamp: number;
+}
+
+/** Status heartbeat published periodically by each device. */
+export interface StudentStatusFrame {
+  meta: StudentMeta;
+  status: {
+    isWelding: boolean;
+    score: number;
+    defect: string;
+  };
+  timestamp: number;
+}
+
+/** Per-student roster entry maintained by the classroom dashboard. */
+export interface RosterEntry {
+  name: string;
+  seat: string;
+  studentId: string;
+  isWelding: boolean;
+  score: number;
+  defect: string;
+  latestFrame: StudentTelemetryFrame | null;
+  frameHistory: StudentTelemetryFrame[];
+}
+
+/** Full classroom roster indexed by seat identifier. */
+export interface ClassroomRoster {
+  [seatId: string]: RosterEntry;
+}
+
+// ───────────────────────────────────────────────────────
+// MQTT Client Class
+// ───────────────────────────────────────────────────────
+
+export class ClassroomMqttClient {
+  private brokerHost: string;
+  private wsPort: number;
+  private client: any = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private statusMonitor: ReturnType<typeof setInterval> | null = null;
+  private _roster: ClassroomRoster = {};
+  private _connected: boolean = false;
+
+  /** Max frames retained per student (prevent memory exhaustion). */
+  private readonly MAX_HISTORY = 500;
+
+  /** Idle timeout: if no frame arrives in this window, student is flagged idle. */
+  private readonly IDLE_TIMEOUT_MS = 2000;
+
+  // ── Callbacks ──────────────────────────────────────
+
+  /** Fired when a new telemetry frame arrives. */
+  onFrame: ((topic: string, frame: StudentTelemetryFrame) => void) | null = null;
+
+  /** Fired when a student status heartbeat arrives. */
+  onStatus: ((topic: string, status: StudentStatusFrame) => void) | null = null;
+
+  /** Fired when the roster changes (new student, idle timeout, etc.). */
+  onRosterChange: ((roster: ClassroomRoster) => void) | null = null;
+
+  /** Fired on connection state change. */
+  onConnectionChange: ((connected: boolean, error?: string) => void) | null = null;
+
+  constructor(brokerHost: string = "localhost", wsPort: number = 9001) {
+    this.brokerHost = brokerHost;
+    this.wsPort = wsPort;
+  }
+
+  // ── Public API ─────────────────────────────────────
+
+  get roster(): ClassroomRoster {
+    return this._roster;
+  }
+
+  get connected(): boolean {
+    return this._connected;
+  }
+
+  /**
+   * Connects to the Mosquitto broker via WebSocket.
+   * Subscribes to the classroom wildcard topic.
+   */
+  connect(): void {
+    if (this.client) return;
+
+    const wsUrl = `ws://${this.brokerHost}:${this.wsPort}`;
+    console.log(`[ClassroomMqtt] Connecting to ${wsUrl}...`);
+
+    // Use global mqtt from CDN (loaded via import map in HTML)
+    const mqtt = (window as any).mqtt;
+    if (!mqtt) {
+      const err = "mqtt.js not loaded — check import map in HTML";
+      console.error(`[ClassroomMqtt] ${err}`);
+      this.onConnectionChange?.(false, err);
+      return;
+    }
+
+    this.client = mqtt.connect(wsUrl, {
+      clientId: `weldvision_dashboard_${Math.random().toString(36).slice(2, 8)}`,
+      clean: true,
+      reconnectPeriod: 2000,
+      connectTimeout: 5000,
+    });
+
+    this.client.on("connect", () => {
+      console.log("[ClassroomMqtt] Connected to broker");
+      this._connected = true;
+
+      // Subscribe to ALL student streams via single wildcard topic
+      this.client.subscribe("weldvision/student/+/live", { qos: 0 });
+      this.client.subscribe("weldvision/student/+/status", { qos: 0 });
+
+      this.onConnectionChange?.(true);
+      this.startStatusMonitor();
+    });
+
+    this.client.on("message", (topic: string, payload: Buffer) => {
+      this.handleMessage(topic, payload);
+    });
+
+    this.client.on("error", (err: Error) => {
+      console.error("[ClassroomMqtt] Error:", err.message);
+      this.onConnectionChange?.(false, err.message);
+    });
+
+    this.client.on("close", () => {
+      console.warn("[ClassroomMqtt] Connection closed");
+      this._connected = false;
+      this.onConnectionChange?.(false);
+      this.stopStatusMonitor();
+    });
+
+    this.client.on("reconnect", () => {
+      console.log("[ClassroomMqtt] Reconnecting...");
+    });
+  }
+
+  /**
+   * Disconnects from the broker and cleans up.
+   */
+  disconnect(): void {
+    this.stopStatusMonitor();
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.client) {
+      this.client.end();
+      this.client = null;
+    }
+    this._connected = false;
+  }
+
+  /**
+   * Returns the count of students currently flagged as welding.
+   */
+  getActiveCount(): number {
+    return Object.values(this._roster).filter((r) => r.isWelding).length;
+  }
+
+  /**
+   * Returns all rostered students as a sorted array.
+   */
+  getRosterList(): RosterEntry[] {
+    return Object.values(this._roster).sort((a, b) =>
+      a.seat.localeCompare(b.seat)
+    );
+  }
+
+  // ── Message Routing ────────────────────────────────
+
+  private handleMessage(topic: string, payload: Buffer): void {
+    try {
+      const raw = payload.toString();
+      const data = JSON.parse(raw);
+
+      // Determine message type from topic suffix
+      if (topic.endsWith("/live")) {
+        const frame = data as StudentTelemetryFrame;
+        this.upsertRoster(frame);
+        this.onFrame?.(topic, frame);
+      } else if (topic.endsWith("/status")) {
+        const status = data as StudentStatusFrame;
+        this.updateStatus(status);
+        this.onStatus?.(topic, status);
+      }
+    } catch (err) {
+      console.warn("[ClassroomMqtt] Corrupted frame:", err);
+    }
+  }
+
+  // ── Roster Management ──────────────────────────────
+
+  private upsertRoster(frame: StudentTelemetryFrame): void {
+    const seat = frame.meta.seat;
+    const existing = this._roster[seat];
+
+    const history = existing
+      ? [...existing.frameHistory, frame]
+      : [frame];
+
+    // Cap history to prevent memory exhaustion
+    if (history.length > this.MAX_HISTORY) {
+      history.splice(0, history.length - this.MAX_HISTORY);
+    }
+
+    this._roster = {
+      ...this._roster,
+      [seat]: {
+        name: frame.meta.name,
+        seat: frame.meta.seat,
+        studentId: frame.meta.studentId,
+        isWelding: true,
+        score: existing?.score ?? 0,
+        defect: existing?.defect ?? "",
+        latestFrame: frame,
+        frameHistory: history,
+      },
+    };
+  }
+
+  private updateStatus(status: StudentStatusFrame): void {
+    const seat = status.meta.seat;
+    const existing = this._roster[seat];
+    if (!existing) return;
+
+    this._roster = {
+      ...this._roster,
+      [seat]: {
+        ...existing,
+        isWelding: status.status.isWelding,
+        score: status.status.score,
+        defect: status.status.defect,
+      },
+    };
+  }
+
+  // ── Status Monitor (Idle Detection) ────────────────
+
+  private startStatusMonitor(): void {
+    this.stopStatusMonitor();
+    this.statusMonitor = setInterval(() => {
+      const now = Date.now();
+      let changed = false;
+      const updated = { ...this._roster };
+
+      for (const seat of Object.keys(updated)) {
+        const entry = updated[seat];
+        const lastTime = entry.latestFrame?.timestamp ?? 0;
+
+        if (now - lastTime > this.IDLE_TIMEOUT_MS) {
+          if (entry.isWelding) {
+            updated[seat] = { ...entry, isWelding: false };
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        this._roster = updated;
+        this.onRosterChange?.(this._roster);
+      }
+    }, 2000);
+  }
+
+  private stopStatusMonitor(): void {
+    if (this.statusMonitor) {
+      clearInterval(this.statusMonitor);
+      this.statusMonitor = null;
+    }
+  }
+}

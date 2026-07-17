@@ -1,0 +1,139 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WeldVision Telemetry Message",
+  "description": "Union of all message types exchanged between Android app and WeldVision Studio via the telemetry server.",
+  "oneOf": [
+    { "$ref": "#/definitions/RegistrationMessage" },
+    { "$ref": "#/definitions/TelemetryFrame" },
+    { "$ref": "#/definitions/CalibrationProfileMessage" },
+    { "$ref": "#/definitions/SessionStartMessage" },
+    { "$ref": "#/definitions/SessionEndMessage" },
+    { "$ref": "#/definitions/RecalibrationRequestMessage" }
+  ],
+  "definitions": {
+    "RegistrationMessage": {
+      "type": "object",
+      "required": ["type", "bracketId", "studentId", "role"],
+      "properties": {
+        "type": { "const": "register" },
+        "bracketId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "role": { "enum": ["student", "instructor"] }
+      }
+    },
+    "TelemetryFrame": {
+      "type": "object",
+      "required": ["type", "sessionId", "timestampMs", "tipPosition"],
+      "properties": {
+        "type": { "const": "telemetry_frame" },
+        "sessionId": { "type": "string" },
+        "bracketId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "timestampMs": { "type": "integer" },
+        "tipPosition": {
+          "type": "object",
+          "required": ["x_mm", "y_mm", "z_mm"],
+          "properties": {
+            "x_mm": { "type": "number", "description": "Cross-seam position. Positive = away from joint root." },
+            "y_mm": { "type": "number", "description": "Travel distance along weld seam from start point." },
+            "z_mm": { "type": "number", "description": "Contact Tip to Work Distance (CTWD). Height above base plate." }
+          }
+        },
+        "torchAngles": {
+          "type": "object",
+          "description": "Optional torch orientation in degrees.",
+          "properties": {
+            "travelAngle_deg": { "type": "number" },
+            "workAngle_deg": { "type": "number" }
+          }
+        },
+        "quality": {
+          "type": "object",
+          "properties": {
+            "trackingConfidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "AprilTag detection confidence. 1.0 = perfect detection." },
+            "tagVisible": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "CalibrationProfileMessage": {
+      "type": "object",
+      "required": ["type", "bracketId", "studentId", "profile"],
+      "properties": {
+        "type": { "const": "calibration_profile" },
+        "bracketId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "deviceModel": { "type": "string" },
+        "profile": {
+          "type": "object",
+          "required": ["tcp", "workpiece"],
+          "properties": {
+            "tcp": {
+              "type": "object",
+              "required": ["offsetX", "offsetY", "offsetZ", "quality"],
+              "properties": {
+                "offsetX": { "type": "number" },
+                "offsetY": { "type": "number" },
+                "offsetZ": { "type": "number" },
+                "quality": {
+                  "type": "object",
+                  "required": ["coveragePercent", "conditionNumber", "residualMm", "reprojectionMeanMm", "sampleCount"],
+                  "properties": {
+                    "coveragePercent": { "type": "number", "description": "Angular spread of pivot motion. >= 70 required." },
+                    "conditionNumber": { "type": "number", "description": "Design matrix condition number. <= 100 required. Primary guard against degenerate pivot." },
+                    "residualMm": { "type": "number", "description": "Least-squares residual in mm. <= 0.5 required." },
+                    "reprojectionMeanMm": { "type": "number", "description": "Mean tip convergence error. Measures sample consistency, not absolute accuracy. <= 0.3 required." },
+                    "reprojectionMaxMm": { "type": "number", "description": "Maximum tip convergence error across all samples." },
+                    "sampleCount": { "type": "integer", "description": "Number of poses collected during pivot. >= 5 required." }
+                  }
+                }
+              }
+            },
+            "workpiece": {
+              "type": "object",
+              "required": ["method", "seamLengthMm", "valid"],
+              "properties": {
+                "method": { "enum": ["touchdown", "tag_auto"], "description": "touchdown = 3-point physical touch. tag_auto = from CNC-engraved AprilTag grid." },
+                "seamLengthMm": { "type": "number" },
+                "valid": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "SessionStartMessage": {
+      "type": "object",
+      "required": ["type", "sessionId", "bracketId", "studentId"],
+      "properties": {
+        "type": { "const": "session_start" },
+        "sessionId": { "type": "string" },
+        "bracketId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "timestampMs": { "type": "integer" },
+        "calibrationProfileId": { "type": "string" }
+      }
+    },
+    "SessionEndMessage": {
+      "type": "object",
+      "required": ["type", "sessionId"],
+      "properties": {
+        "type": { "const": "session_end" },
+        "sessionId": { "type": "string" },
+        "timestampMs": { "type": "integer" },
+        "totalTravelMm": { "type": "number", "description": "Total distance the tip traveled along the seam." },
+        "durationSec": { "type": "number", "description": "Total arc-on time in seconds." }
+      }
+    },
+    "RecalibrationRequestMessage": {
+      "type": "object",
+      "required": ["type", "bracketId", "studentId", "reason"],
+      "properties": {
+        "type": { "const": "recalibration_request" },
+        "bracketId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "reason": { "type": "string", "description": "Human-readable reason the instructor rejected the calibration." }
+      }
+    }
+  }
+}

@@ -1,0 +1,137 @@
+[
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\apriltag.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\apriltag.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\apriltag.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\apriltag_pose.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\apriltag_pose.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\apriltag_pose.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\apriltag_quad_thresh.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\apriltag_quad_thresh.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\apriltag_quad_thresh.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\tagStandard41h12.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\tagStandard41h12.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\tagStandard41h12.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\tagStandard52h13.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\tagStandard52h13.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\tagStandard52h13.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\tagCustom48h12.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\tagCustom48h12.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\tagCustom48h12.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\getopt.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\getopt.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\getopt.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\g2d.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\g2d.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\g2d.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\homography.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\homography.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\homography.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\image_u8.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\image_u8.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\image_u8.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\image_u8x3.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\image_u8x3.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\image_u8x3.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\image_u8x4.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\image_u8x4.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\image_u8x4.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\image_u8_parallel.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\image_u8_parallel.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\image_u8_parallel.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\matd.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\matd.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\matd.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\pam.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\pam.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\pam.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\pjpeg.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\pjpeg.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\pjpeg.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\pnm.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\pnm.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\pnm.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\pthreads_cross.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\pthreads_cross.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\pthreads_cross.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\string_util.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\string_util.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\string_util.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\svd22.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\svd22.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\svd22.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\time_util.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\time_util.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\time_util.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\unionfind.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\unionfind.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\unionfind.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\workerpool.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\workerpool.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\workerpool.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\zarray.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\zarray.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\zarray.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\zhash.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\zhash.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\zhash.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D__USE_GNU=1 -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -fPIC -std=gnu11 -o CMakeFiles\\apriltag_core.dir\\apriltag\\common\\zmaxheap.c.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\zmaxheap.c",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag\\common\\zmaxheap.c"
+},
+{
+  "directory": "D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/arm64-v8a",
+  "command": "C:\\Users\\wilson\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android24 --sysroot=C:/Users/wilson/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dweldvision_jni_EXPORTS -ID:/weldvision-trainer/app/src/main/cpp -ID:/weldvision-trainer/app/src/main/cpp/apriltag -ID:/weldvision-trainer/app/src/main/cpp/apriltag/common -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -O2 -Wall -Wextra -fPIE -o CMakeFiles\\weldvision_jni.dir\\apriltag_jni.cpp.o -c D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag_jni.cpp",
+  "file": "D:\\weldvision-trainer\\app\\src\\main\\cpp\\apriltag_jni.cpp"
+}
+]

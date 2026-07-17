@@ -1,10 +1,16 @@
 {
   "folders": [
-    {
-      "path": ".",
-    },
+    { "path": ".", "name": "Root" },
+    { "path": "android-app", "name": "📱 Android App" },
+    { "path": "webvision-studio", "name": "💻 WebVision Studio" },
+    { "path": "telemetry-server", "name": "🌐 Telemetry Bridge" },
+    { "path": "core-assets", "name": "🎨 Core Assets" }
   ],
   "settings": {
     "java.configuration.updateBuildConfiguration": "automatic",
-  },
+    "files.exclude": {
+      "**/.gradle": true,
+      "**/.kotlin": true
+    }
+  }
 }

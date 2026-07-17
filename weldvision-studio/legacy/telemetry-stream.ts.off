@@ -1,0 +1,65 @@
+﻿/**
+ * WeldVision Trainer 2.0 — Telemetry Stream Helpers
+ * ==================================================
+ *
+ * Spatial math utilities used by the Three.js classroom dashboard
+ * renderer. These helpers convert MQTT telemetry frames into
+ * Three.js coordinates and flag tracking outliers.
+ *
+ * Live streaming is handled by ClassroomMqttClient (mqtt-client.ts).
+ */
+
+export interface TelemetryFrame {
+  t: number;
+  x: number;
+  y: number;
+  z: number;
+  travel_angle: number;
+  work_angle: number;
+}
+
+const MAX_TIP_RADIUS_MM = 500.0;
+
+export function isFrameOutlier(frame: TelemetryFrame): boolean {
+  const norm = Math.sqrt(frame.x * frame.x + frame.y * frame.y + frame.z * frame.z);
+  return norm > MAX_TIP_RADIUS_MM;
+}
+
+export function toThreeVector(
+  frame: TelemetryFrame,
+  flipZ: boolean = true,
+): { x: number; y: number; z: number } {
+  return {
+    x: frame.x,
+    y: frame.y,
+    z: flipZ ? -frame.z : frame.z,
+  };
+}
+
+export function decomposeAngles(frame: TelemetryFrame): {
+  travel: number;
+  work: number;
+} {
+  return {
+    travel: frame.travel_angle,
+    work: frame.work_angle,
+  };
+}
+
+export function generateDemoFrames(count: number = 300): TelemetryFrame[] {
+  const data: TelemetryFrame[] = [];
+  for (let i = 0; i < count; i++) {
+    const t = i / 60;
+    const progress = i / count;
+    const weave = Math.sin(progress * Math.PI * 12) * 2.5;
+    data.push({
+      t,
+      x: weave,
+      y: progress * 200,
+      z: 3.0 + Math.sin(progress * Math.PI * 4) * 0.5,
+      travel_angle: 10 + weave * 1.2,
+      work_angle: 88 + Math.sin(progress * Math.PI * 8) * 1.5,
+    });
+  }
+  return data;
+}

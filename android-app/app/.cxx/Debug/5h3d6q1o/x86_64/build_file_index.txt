@@ -1,0 +1,1 @@
+D:\weldvision-trainer\app\src\main\cpp\CMakeLists.txt

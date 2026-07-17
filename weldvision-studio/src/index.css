@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-weld-bg: #0d1117;
+  --color-weld-surface: #161b22;
+  --color-weld-card: #21262d;
+  --color-weld-border: #30363d;
+  --color-weld-text: #c9d1d9;
+  --color-weld-muted: #8b949e;
+  --color-weld-accent: #58a6ff;
+  --color-weld-green: #3fb950;
+  --color-weld-yellow: #d29922;
+  --color-weld-red: #da3633;
+  --color-weld-orange: #ff7b00;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-weld-surface); }
+::-webkit-scrollbar-thumb { background: var(--color-weld-border); border-radius: 3px; }

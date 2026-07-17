@@ -1,0 +1,4 @@
+D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/x86_64/CMakeFiles/apriltag_core.dir
+D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/x86_64/CMakeFiles/weldvision_jni.dir
+D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/x86_64/CMakeFiles/edit_cache.dir
+D:/weldvision-trainer/app/.cxx/Debug/5h3d6q1o/x86_64/CMakeFiles/rebuild_cache.dir

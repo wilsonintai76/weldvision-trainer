@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WeldVision Trainer 2.0 — 3D Telemetry Replay</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      overflow: hidden;
+      height: 100vh;
+    }
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+    }
+    #hud {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      background: rgba(22, 27, 34, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 12px 24px;
+      z-index: 10;
+    }
+    #hud button {
+      background: #238636;
+      color: #fff;
+      border: 1px solid #2ea043;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #hud button:hover { background: #2ea043; }
+    #hud button:disabled { background: #21262d; color: #484f58; border-color: #30363d; cursor: not-allowed; }
+    #hud input[type="range"] { width: 100px; accent-color: #238636; }
+    #hud label { font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    #info-panel {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: rgba(22, 27, 34, 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 13px;
+      line-height: 1.6;
+      z-index: 10;
+      min-width: 200px;
+    }
+    #info-panel span { color: #58a6ff; font-weight: 600; }
+    .outlier-badge {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      background: rgba(218, 54, 51, 0.85);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      display: none;
+      z-index: 10;
+    }
+    .outlier-badge.visible { display: block; }
+    #progress-bar {
+      position: absolute;
+      top: 0; left: 0;
+      height: 3px;
+      background: #238636;
+      transition: width 0.05s linear;
+      z-index: 20;
+    }
+  </style>
+</head>
+<body>
+  <div id="progress-bar" style="width: 0%"></div>
+  <div id="canvas-container"></div>
+  <div class="outlier-badge" id="outlier-badge">⚠ Outlier Dropped</div>
+  <div id="info-panel">
+    <div>Frame: <span id="frame-num">0</span></div>
+    <div>Time: <span id="frame-time">0.00s</span></div>
+    <div>Travel θ: <span id="travel-angle">—</span></div>
+    <div>Work φ: <span id="work-angle">—</span></div>
+    <div>Tip (x,y,z): <span id="tip-pos">—</span></div>
+  </div>
+  <div id="hud">
+    <button id="btn-play" title="Play">▶</button>
+    <button id="btn-pause" title="Pause" disabled>⏸</button>
+    <button id="btn-reset" title="Reset">⏮</button>
+    <label>Speed <input type="range" id="speed-slider" min="0.25" max="4" step="0.25" value="1" /></label>
+    <span id="speed-label">1.0×</span>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import {
+      loadReplayStream,
+      decomposeAngles,
+      toThreeVector,
+      isFrameOutlier,
+    } from "./telemetry-stream.ts";
+
+    // ── Config ──────────────────────────────────────────────────────────
+    const CONFIG = {
+      r2BaseUrl: "https://r2.weldvision-cloud.io",
+      workerBaseUrl: "https://api.weldvision-cloud.io",
+      appId: "weldvision-trainer",
+    };
+    // Replace with real IDs to load live data; demo uses generated frames below.
+    const DEMO_STUDENT_ID = "student-42";
+    const DEMO_SESSION_ID = "session-demo-001";
+
+    // ── Scene Setup ─────────────────────────────────────────────────────
+    const container = document.getElementById("canvas-container");
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0d1117);
+    scene.fog = new THREE.Fog(0x0d1117, 800, 2000);
+
+    const camera = new THREE.PerspectiveCamera(
+      50,
+      container.clientWidth / container.clientHeight,
+      10,
+      3000,
+    );
+    camera.position.set(300, 200, 400);
+    camera.lookAt(0, 0, 100);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 100);
+    controls.enableDamping = true;
+    controls.update();
+
+    // ── Lighting ────────────────────────────────────────────────────────
+    scene.add(new THREE.AmbientLight(0x404060, 1.5));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(200, 400, 300);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    // ── Weld Plate Mock-up (T-Joint) ────────────────────────────────────
+    function createPlate(width, height, depth, color, pos) {
+      const geo = new THREE.BoxGeometry(width, height, depth);
+      const mat = new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.6,
+        metalness: 0.4,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(pos.x, pos.y, pos.z);
+      mesh.receiveShadow = true;
+      mesh.castShadow = true;
+      return mesh;
+    }
+
+    // Horizontal base plate
+    scene.add(createPlate(300, 4, 200, 0x4a5568, { x: 0, y: -2, z: 100 }));
+    // Vertical plate (T-joint stem)
+    scene.add(createPlate(4, 100, 200, 0x5a6578, { x: 0, y: 48, z: 100 }));
+
+    // Grid helper
+    const grid = new THREE.GridHelper(400, 20, 0x30363d, 0x21262d);
+    grid.position.set(0, -4, 100);
+    scene.add(grid);
+
+    // ── Coordinate Axes ─────────────────────────────────────────────────
+    // X = red, Y = green, Z = blue (world frame [W])
+    const axesLen = 150;
+    const xAxis = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(axesLen, 0, 0)]),
+      new THREE.LineBasicMaterial({ color: 0xff4444 }),
+    );
+    const yAxis = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, axesLen, 0)]),
+      new THREE.LineBasicMaterial({ color: 0x44ff44 }),
+    );
+    const zAxis = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, axesLen)]),
+      new THREE.LineBasicMaterial({ color: 0x4488ff }),
+    );
+    scene.add(xAxis, yAxis, zAxis);
+
+    // ── Telemetry Ribbon ────────────────────────────────────────────────
+    const ribbonPoints = [];
+    const ribbonGeo = new THREE.BufferGeometry();
+    const ribbonMat = new THREE.LineBasicMaterial({
+      color: 0x58a6ff,
+      linewidth: 1,
+    });
+    const ribbonLine = new THREE.Line(ribbonGeo, ribbonMat);
+    scene.add(ribbonLine);
+
+    // ── Torch Indicator Sphere ──────────────────────────────────────────
+    const torchSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(4, 16, 16),
+      new THREE.MeshStandardMaterial({ color: 0xff7b00, emissive: 0xff4400, emissiveIntensity: 0.6 }),
+    );
+    torchSphere.visible = false;
+    scene.add(torchSphere);
+
+    // ── Animation State ─────────────────────────────────────────────────
+    let frames = [];
+    let currentFrameIndex = 0;
+    let isPlaying = false;
+    let playbackSpeed = 1.0;
+    let lastFrameTime = 0;
+    const FRAME_INTERVAL_MS = 1000 / 60; // 60 Hz base rate
+
+    const btnPlay = document.getElementById("btn-play");
+    const btnPause = document.getElementById("btn-pause");
+    const btnReset = document.getElementById("btn-reset");
+    const speedSlider = document.getElementById("speed-slider");
+    const speedLabel = document.getElementById("speed-label");
+    const progressBar = document.getElementById("progress-bar");
+    const outlierBadge = document.getElementById("outlier-badge");
+
+    function updateHUD(frame) {
+      document.getElementById("frame-num").textContent = currentFrameIndex;
+      document.getElementById("frame-time").textContent = frame.t.toFixed(2) + "s";
+      document.getElementById("travel-angle").textContent = frame.travel_angle.toFixed(1) + "°";
+      document.getElementById("work-angle").textContent = frame.work_angle.toFixed(1) + "°";
+      document.getElementById("tip-pos").textContent =
+        `(${frame.x.toFixed(1)}, ${frame.y.toFixed(1)}, ${frame.z.toFixed(1)}) mm`;
+      progressBar.style.width = `${((currentFrameIndex / frames.length) * 100).toFixed(1)}%`;
+    }
+
+    function updateRibbon() {
+      const visibleFrames = frames.slice(0, currentFrameIndex + 1);
+      const pts = visibleFrames.map((f) => {
+        const v = toThreeVector(f, true);
+        return new THREE.Vector3(v.x, v.y, v.z);
+      });
+      ribbonGeo.setFromPoints(pts);
+
+      // Move torch sphere to latest position
+      if (pts.length > 0) {
+        torchSphere.position.copy(pts[pts.length - 1]);
+        torchSphere.visible = true;
+      }
+    }
+
+    function resetReplay() {
+      currentFrameIndex = 0;
+      isPlaying = false;
+      btnPlay.textContent = "▶";
+      btnPause.disabled = true;
+      ribbonGeo.setFromPoints([]);
+      torchSphere.visible = false;
+      progressBar.style.width = "0%";
+      document.getElementById("frame-num").textContent = "0";
+      document.getElementById("frame-time").textContent = "0.00s";
+      document.getElementById("travel-angle").textContent = "—";
+      document.getElementById("work-angle").textContent = "—";
+      document.getElementById("tip-pos").textContent = "—";
+    }
+
+    async function loadDemoFrames() {
+      resetReplay();
+
+      try {
+        // Attempt to load real data from R2; falls back to generated demo frames
+        const collected = [];
+        for await (const frame of loadReplayStream(
+          CONFIG,
+          DEMO_STUDENT_ID,
+          DEMO_SESSION_ID,
+        )) {
+          collected.push(frame);
+        }
+        frames = collected;
+      } catch {
+        // Generate synthetic demo frames for offline development
+        console.warn("R2 unavailable — using generated demo telemetry.");
+        frames = generateDemoFrames();
+      }
+
+      btnPlay.disabled = false;
+      btnReset.disabled = false;
+    }
+
+    function generateDemoFrames() {
+      const data = [];
+      const totalFrames = 300; // 5 seconds at 60 Hz
+      for (let i = 0; i < totalFrames; i++) {
+        const t = i / 60;
+        // Simulate a T-joint horizontal pass with slight weaving
+        const progress = i / totalFrames;
+        const weave = Math.sin(progress * Math.PI * 12) * 2.5; // oscillation
+        data.push({
+          t,
+          x: weave,                              // lateral weave (mm)
+          y: progress * 200,                      // travel along seam (mm)
+          z: 3.0 + Math.sin(progress * Math.PI * 4) * 0.5, // arc gap variation
+          travel_angle: 10 + weave * 1.2,         // ~10° ± oscillation
+          work_angle: 88 + Math.sin(progress * Math.PI * 8) * 1.5,
+        });
+      }
+      return data;
+    }
+
+    // ── Render Loop ─────────────────────────────────────────────────────
+    function animate(timestamp) {
+      requestAnimationFrame(animate);
+
+      if (isPlaying && frames.length > 0) {
+        const elapsed = timestamp - lastFrameTime;
+        const interval = FRAME_INTERVAL_MS / playbackSpeed;
+
+        if (elapsed >= interval) {
+          lastFrameTime = timestamp - (elapsed % interval);
+          currentFrameIndex++;
+
+          if (currentFrameIndex >= frames.length) {
+            // Replay complete
+            currentFrameIndex = frames.length - 1;
+            isPlaying = false;
+            btnPlay.textContent = "⟳";
+            btnPause.disabled = true;
+          }
+
+          updateRibbon();
+          updateHUD(frames[currentFrameIndex]);
+
+          // Flash outlier badge if this frame was dropped on-device
+          if (isFrameOutlier(frames[currentFrameIndex])) {
+            outlierBadge.classList.add("visible");
+            setTimeout(() => outlierBadge.classList.remove("visible"), 1200);
+          }
+        }
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    // ── Controls ────────────────────────────────────────────────────────
+    btnPlay.addEventListener("click", () => {
+      if (currentFrameIndex >= frames.length - 1) {
+        // Restart from beginning
+        currentFrameIndex = 0;
+        ribbonGeo.setFromPoints([]);
+      }
+      isPlaying = true;
+      lastFrameTime = performance.now();
+      btnPlay.textContent = "▶";
+      btnPause.disabled = false;
+    });
+
+    btnPause.addEventListener("click", () => {
+      isPlaying = false;
+      btnPlay.textContent = "▶";
+      btnPause.disabled = true;
+    });
+
+    btnReset.addEventListener("click", resetReplay);
+
+    speedSlider.addEventListener("input", () => {
+      playbackSpeed = parseFloat(speedSlider.value);
+      speedLabel.textContent = playbackSpeed.toFixed(2) + "×";
+    });
+
+    window.addEventListener("resize", () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    // ── Keyboard shortcuts ──────────────────────────────────────────────
+    window.addEventListener("keydown", (e) => {
+      switch (e.key) {
+        case " ":
+          e.preventDefault();
+          isPlaying ? btnPause.click() : btnPlay.click();
+          break;
+        case "r":
+          btnReset.click();
+          break;
+        case "ArrowRight":
+          speedSlider.value = Math.min(4, playbackSpeed + 0.25);
+          speedSlider.dispatchEvent(new Event("input"));
+          break;
+        case "ArrowLeft":
+          speedSlider.value = Math.max(0.25, playbackSpeed - 0.25);
+          speedSlider.dispatchEvent(new Event("input"));
+          break;
+      }
+    });
+
+    // ── Bootstrap ───────────────────────────────────────────────────────
+    btnPlay.disabled = true;
+    btnReset.disabled = true;
+    loadDemoFrames().then(() => {
+      updateRibbon();
+      updateHUD(frames[0] || { t: 0, x: 0, y: 0, z: 0, travel_angle: 0, work_angle: 0 });
+    });
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
